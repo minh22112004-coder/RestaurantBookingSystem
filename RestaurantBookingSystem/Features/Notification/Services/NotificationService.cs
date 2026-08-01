@@ -1,63 +1,72 @@
-﻿using RestaurantBookingSystem.Models;
-using Microsoft.EntityFrameworkCore;
-namespace RestaurantBookingSystem.Features.Notification.Services
+using RestaurantBookingSystem.Features.Notification.DTOs;
+using RestaurantBookingSystem.Features.Notification.Repositories;
+
+namespace RestaurantBookingSystem.Features.Notification.Services;
+
+public class NotificationService : INotificationService
 {
-    public class NotificationService : INotificationService
+    private readonly INotificationRepository _repository;
+
+    public NotificationService(INotificationRepository repository)
     {
-         private readonly RestaurantReservationDbContext _context;
+        _repository = repository;
+    }
 
-        public NotificationService(RestaurantReservationDbContext context)
+    public async Task<List<NotificationResponse>> GetByUserIdAsync(int userId)
+    {
+        var notifications = await _repository.GetByUserIdAsync(userId);
+        return notifications.Select(MapToResponse).ToList();
+    }
+
+    public async Task<NotificationResponse?> GetByIdAsync(int id)
+    {
+        var notification = await _repository.GetByIdAsync(id);
+        return notification is null ? null : MapToResponse(notification);
+    }
+
+    public async Task<NotificationResponse?> CreateAsync(CreateNotificationRequest request)
+    {
+        if (!await _repository.UserExistsAsync(request.UserId))
+            return null;
+
+        var notification = new Models.Notification
         {
-            _context = context;
-        }
+            UserId = request.UserId,
+            Title = request.Title,
+            Message = request.Message,
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow
+        };
 
-        public List<Models.Notification> GetAll()
-        {
-            return _context.Notifications.ToList();
-        }
+        await _repository.AddAsync(notification);
+        await _repository.SaveChangesAsync();
+        return MapToResponse(notification);
+    }
 
-        public Models.Notification? GetById(int id)
-        {
-            return _context.Notifications.Find(id);
-        }
+    public async Task<bool> MarkAsReadAsync(int id)
+    {
+        var notification = await _repository.GetByIdAsync(id);
+        if (notification is null)
+            return false;
 
-        public Models.Notification Create(Models.Notification notification)
-        {
-            notification.CreatedAt = DateTime.Now;
-            notification.IsRead = false;
-
-            _context.Notifications.Add(notification);
-            _context.SaveChanges();
-
-            return notification;
-        }
-
-        public bool MarkAsRead(int id)
-        {
-            var notification = _context.Notifications.Find(id);
-
-            if (notification == null)
-                return false;
-
-            notification.IsRead = true;
-
-            _context.SaveChanges();
-
+        if (notification.IsRead == true)
             return true;
-        }
 
-        public bool Delete(int id)
+        notification.IsRead = true;
+        await _repository.SaveChangesAsync();
+        return true;
+    }
+
+    private static NotificationResponse MapToResponse(Models.Notification notification)
+    {
+        return new NotificationResponse
         {
-            var notification = _context.Notifications.Find(id);
-
-            if (notification == null)
-                return false;
-
-            _context.Notifications.Remove(notification);
-
-            _context.SaveChanges();
-
-            return true;
-        }
+            NotificationId = notification.NotificationId,
+            UserId = notification.UserId,
+            Title = notification.Title,
+            Message = notification.Message,
+            IsRead = notification.IsRead ?? false,
+            CreatedAt = notification.CreatedAt ?? DateTime.MinValue
+        };
     }
 }
