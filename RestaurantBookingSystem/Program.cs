@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RestaurantBookingSystem.Models;
 using RestaurantBookingSystem.Features.Notification.Services;
+using RestaurantBookingSystem.Features.Notification.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -13,6 +14,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<RestaurantReservationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 // ...
 var app = builder.Build();

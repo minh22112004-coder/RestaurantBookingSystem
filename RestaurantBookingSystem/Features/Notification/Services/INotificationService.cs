@@ -1,17 +1,11 @@
-﻿using RestaurantBookingSystem.Models;
+using RestaurantBookingSystem.Features.Notification.DTOs;
 
-namespace RestaurantBookingSystem.Features.Notification.Services
+namespace RestaurantBookingSystem.Features.Notification.Services;
+
+public interface INotificationService
 {
-    public interface INotificationService
-    {
-        List<Models.Notification> GetAll();
-
-        Models.Notification? GetById(int id);
-
-        Models.Notification Create(Models.Notification notification);
-
-        bool MarkAsRead(int id);
-
-        bool Delete(int id);
-    }
+    Task<List<NotificationResponse>> GetByUserIdAsync(int userId);
+    Task<NotificationResponse?> GetByIdAsync(int id);
+    Task<NotificationResponse?> CreateAsync(CreateNotificationRequest request);
+    Task<bool> MarkAsReadAsync(int id);
 }
