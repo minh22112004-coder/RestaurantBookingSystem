@@ -1,16 +1,21 @@
 using Microsoft.EntityFrameworkCore;
-using RestaurantBookingSystem.Models;
-using RestaurantBookingSystem.Features.Notification.Services;
-using RestaurantBookingSystem.Features.Notification.Repositories;
-
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
+using RestaurantBookingSystem.Models;
+
+using RestaurantBookingSystem.Features.Authentication.Services;
 using RestaurantBookingSystem.Features.Authorization.Constants;
 using RestaurantBookingSystem.Features.Authorization.Policies;
 using RestaurantBookingSystem.Features.Data.Seed;
 
-using RestaurantBookingSystem.Features.Authentication.Services;
+using RestaurantBookingSystem.Features.Notification.Repositories;
+using RestaurantBookingSystem.Features.Notification.Services;
+using RestaurantBookingSystem.Features.Reservation.Services;
+
+using RestaurantBookingSystem.Services;
+using RestaurantBookingSystem.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,34 +26,47 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ---- DbContext: dùng đúng context do leader scaffold sẵn ----
-// Lưu ý: RestaurantReservationDbContext.OnConfiguring có UseSqlServer hardcode,
-// nó sẽ ĐÈ chuỗi kết nối dưới đây. Chuỗi bên dưới gần như không có tác dụng
-// trừ khi OnConfiguring được sửa lại (nhưng bạn xác nhận không được sửa Models).
+// DbContext
 builder.Services.AddDbContext<RestaurantReservationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")
     )
 );
 
-// ---- Services ----
+// Services
 builder.Services.AddScoped<ITokenService, TokenService>();
+
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
-// ---- JWT Authentication ----
+builder.Services.AddScoped<ReservationService>();
+builder.Services.AddScoped<IRestaurantService, RestaurantService>();
+builder.Services.AddScoped<IDiningTableService, DiningTableService>();
+
+// JWT Authentication
 string jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("Không tìm thấy cấu hình Jwt:Key.");
+    ?? throw new InvalidOperationException(
+        "Không tìm thấy cấu hình Jwt:Key."
+    );
+
 string jwtIssuer = builder.Configuration["Jwt:Issuer"]
-    ?? throw new InvalidOperationException("Không tìm thấy cấu hình Jwt:Issuer.");
+    ?? throw new InvalidOperationException(
+        "Không tìm thấy cấu hình Jwt:Issuer."
+    );
+
 string jwtAudience = builder.Configuration["Jwt:Audience"]
-    ?? throw new InvalidOperationException("Không tìm thấy cấu hình Jwt:Audience.");
+    ?? throw new InvalidOperationException(
+        "Không tìm thấy cấu hình Jwt:Audience."
+    );
 
 builder.Services
     .AddAuthentication(options =>
     {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme =
+            JwtBearerDefaults.AuthenticationScheme;
+
+        options.DefaultChallengeScheme =
+            JwtBearerDefaults.AuthenticationScheme;
     })
     .AddJwtBearer(options =>
     {
@@ -58,15 +76,17 @@ builder.Services
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+
             ValidIssuer = jwtIssuer,
             ValidAudience = jwtAudience,
+
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtKey)
             )
         };
     });
 
-// ---- Authorization policies ----
+// Authorization policies
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(
@@ -76,7 +96,10 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy(
         AuthorizationPolicies.ManagerOrAdmin,
-        policy => policy.RequireRole(RoleNames.Manager, RoleNames.Admin)
+        policy => policy.RequireRole(
+            RoleNames.Manager,
+            RoleNames.Admin
+        )
     );
 
     options.AddPolicy(
@@ -87,7 +110,7 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-// Gọi seeder role (Admin, Manager, Customer)
+// Seed roles: Admin, Manager, Customer
 using (IServiceScope scope = app.Services.CreateScope())
 {
     await IdentitySeeder.SeedRolesAsync(scope.ServiceProvider);
