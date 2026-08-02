@@ -1,10 +1,11 @@
 ﻿using RestaurantBookingSystem.Models;
 using Microsoft.EntityFrameworkCore;
+
 namespace RestaurantBookingSystem.Features.Notification.Services
 {
     public class NotificationService : INotificationService
     {
-         private readonly RestaurantReservationDbContext _context;
+        private readonly RestaurantReservationDbContext _context;
 
         public NotificationService(RestaurantReservationDbContext context)
         {

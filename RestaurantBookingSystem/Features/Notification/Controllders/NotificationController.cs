@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using RestaurantBookingSystem.Features.Authorization.Policies;
 using RestaurantBookingSystem.Features.Notification.Services;
 
 namespace RestaurantBookingSystem.Features.Notification.Controllders
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // Mặc định: phải đăng nhập mới gọi được bất kỳ action nào trong controller này
     public class NotificationController : ControllerBase
     {
         private readonly INotificationService _notificationService;
@@ -31,6 +34,8 @@ namespace RestaurantBookingSystem.Features.Notification.Controllders
             return Ok(notification);
         }
 
+        // Chỉ Manager hoặc Admin mới được tạo thông báo
+        [Authorize(Policy = AuthorizationPolicies.ManagerOrAdmin)]
         [HttpPost]
         public IActionResult Create(Models.Notification notification)
         {
@@ -39,6 +44,8 @@ namespace RestaurantBookingSystem.Features.Notification.Controllders
             return Ok(created);
         }
 
+        // Chỉ Manager hoặc Admin mới được đánh dấu đã đọc
+        [Authorize(Policy = AuthorizationPolicies.ManagerOrAdmin)]
         [HttpPut("{id}/read")]
         public IActionResult MarkAsRead(int id)
         {
@@ -50,6 +57,8 @@ namespace RestaurantBookingSystem.Features.Notification.Controllders
             return Ok("Notification marked as read.");
         }
 
+        // Chỉ Admin mới được xóa
+        [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
