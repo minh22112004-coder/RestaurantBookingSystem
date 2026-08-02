@@ -17,6 +17,9 @@ using RestaurantBookingSystem.Features.Reservation.Services;
 using RestaurantBookingSystem.Services;
 using RestaurantBookingSystem.Services.Interfaces;
 
+using RestaurantBookingSystem.Features.Dashboard.Services;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -42,6 +45,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ReservationService>();
 builder.Services.AddScoped<IRestaurantService, RestaurantService>();
 builder.Services.AddScoped<IDiningTableService, DiningTableService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 // JWT Authentication
 string jwtKey = builder.Configuration["Jwt:Key"]
