@@ -1,0 +1,52 @@
+@inject IJwtSessionService SessionService
+@{
+    var currentUser = SessionService.Current;
+    var currentPath = Context.Request.Path.Value ?? "/admin";
+    string? CurrentPage(string path, bool exact = false) =>
+        exact ? (string.Equals(currentPath, path, StringComparison.OrdinalIgnoreCase) ? "page" : null)
+              : (currentPath.StartsWith(path, StringComparison.OrdinalIgnoreCase) ? "page" : null);
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - Admin Table & Taste</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body class="admin-body">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <div class="admin-shell">
+        <aside id="admin-sidebar" class="admin-sidebar" aria-label="Administration navigation">
+            <a class="admin-brand" href="/admin">Table & Taste <span>Admin</span></a>
+            <nav>
+                <a href="/admin" aria-current="@CurrentPage("/admin", exact: true)">Overview</a>
+                <a href="/admin/restaurants" aria-current="@CurrentPage("/admin/restaurants")">Restaurants</a>
+                <a href="/admin/tables" aria-current="@CurrentPage("/admin/tables")">Tables</a>
+                <a href="/admin/menu" aria-current="@CurrentPage("/admin/menu")">Menu</a>
+                <a href="/admin/reservations" aria-current="@CurrentPage("/admin/reservations")">Reservation</a>
+            </nav>
+            <div class="admin-sidebar__footer">
+                <span>@(currentUser?.Username ?? "Administrator")</span>
+                <form action="/account/logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button class="link-button link-button--light" type="submit">Sign out</button>
+                </form>
+            </div>
+        </aside>
+        <div class="admin-workspace">
+            <header class="admin-topbar">
+                <button class="nav-toggle" type="button" data-sidebar-toggle aria-expanded="false" aria-controls="admin-sidebar" aria-label="Open administration menu">Menu</button>
+                <a href="/">View customer site</a>
+            </header>
+            <main id="main-content" class="admin-content">
+                <partial name="_FlashMessages" />
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

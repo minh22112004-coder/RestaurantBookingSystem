@@ -1,0 +1,36 @@
+@inject IJwtSessionService SessionService
+@{
+    var currentUser = SessionService.Current;
+    var currentPath = Context.Request.Path.Value ?? string.Empty;
+    string? CurrentPage(string path) => currentPath.StartsWith(path, StringComparison.OrdinalIgnoreCase) ? "page" : null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - Table & Taste Account</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/customer.css" asp-append-version="true" />
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <partial name="_Header" />
+    <partial name="_FlashMessages" />
+    <div class="account-shell">
+        <aside class="account-nav" aria-label="Account navigation">
+            <p class="account-nav__label">Account</p>
+            <p class="account-nav__user">@(currentUser?.Username ?? "Customer")</p>
+            <a href="/reservations" aria-current="@CurrentPage("/reservations")">My reservations</a>
+            <a href="/notifications" aria-current="@CurrentPage("/notifications")">Notifications</a>
+            <a href="/account/profile" aria-current="@CurrentPage("/account/profile")">Profile</a>
+        </aside>
+        <main id="main-content" class="account-content">
+            @RenderBody()
+        </main>
+    </div>
+    <partial name="_Footer" />
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

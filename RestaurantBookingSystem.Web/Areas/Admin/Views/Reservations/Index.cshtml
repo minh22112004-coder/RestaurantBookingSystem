@@ -1,0 +1,41 @@
+@model AdminReservationIndexViewModel
+@{ ViewData["Title"] = "Reservations"; }
+<header class="admin-page-header"><div><p class="eyebrow">Reservation management</p><h1>Reservations</h1></div><p>Review reservations for one service date and cancel them when required.</p></header>
+
+<form method="get" class="admin-filter admin-filter--wide">
+    <div class="form-field"><label for="date">Date</label><input id="date" name="date" type="date" value="@Model.Date.ToString("yyyy-MM-dd")" /></div>
+    <div class="form-field"><label for="restaurantId">Restaurant</label><select id="restaurantId" name="restaurantId"><option value="">All restaurants</option>@foreach (var restaurant in Model.Restaurants) { <option value="@restaurant.RestaurantId" selected="@(Model.RestaurantId == restaurant.RestaurantId)">@restaurant.Name</option> }</select></div>
+    <div class="form-field"><label for="status">Status</label><select id="status" name="status"><option value="">All statuses</option>@foreach (var value in new[] { "Pending", "Confirmed", "Cancelled" }) { <option value="@value" selected="@(string.Equals(Model.Status, value, StringComparison.OrdinalIgnoreCase))">@value</option> }</select></div>
+    <button class="button" type="submit">Apply filters</button>
+</form>
+
+<section class="admin-panel admin-panel--spaced">
+    <div class="admin-panel__heading"><h2>@Model.Date.ToString("dd MMMM yyyy")</h2><span>@Model.Reservations.Count reservation(s)</span></div>
+    @if (Model.Reservations.Count == 0) { <p class="admin-empty">No reservations match the selected filters.</p> }
+    else
+    {
+        <div class="admin-table-wrap"><table class="admin-table">
+            <thead><tr><th>Time</th><th>Restaurant</th><th>Table</th><th>Guests</th><th>Customer ID</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+            @foreach (var row in Model.Reservations)
+            {
+                <tr>
+                    <td><strong>@row.Reservation.StartTime.ToString("HH:mm")</strong><small>to @row.Reservation.EndTime.ToString("HH:mm")</small></td>
+                    <td>@row.RestaurantName</td><td>@row.TableNumber</td><td>@row.Reservation.GuestCount</td><td>#@row.Reservation.UserId</td><td><span class="status-badge status-badge--@row.Reservation.Status.ToLowerInvariant()">@row.Reservation.Status</span></td>
+                    <td>
+                    @if (!string.Equals(row.Reservation.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <div class="admin-actions">
+                            <a class="button button--small button--ghost" asp-action="Edit" asp-route-id="@row.Reservation.ReservationId" asp-route-date="@Model.Date.ToString("yyyy-MM-dd")">Edit</a>
+                            <form asp-action="Cancel" asp-route-id="@row.Reservation.ReservationId" asp-route-date="@Model.Date.ToString("yyyy-MM-dd")" asp-route-restaurantId="@Model.RestaurantId" asp-route-status="@Model.Status" method="post" data-confirm-form data-confirm-title="Cancel reservation?" data-confirm-message="The customer reservation will be marked as cancelled."><button class="button button--small button--danger" type="submit">Cancel</button></form>
+                        </div>
+                    }
+                    else { <span class="admin-muted">No action</span> }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table></div>
+    }
+</section>
+<partial name="~/Views/Shared/_ConfirmDialogPartial.cshtml" />

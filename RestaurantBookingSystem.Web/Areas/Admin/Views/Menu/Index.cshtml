@@ -1,0 +1,74 @@
+@model AdminMenuIndexViewModel
+@{
+    ViewData["Title"] = "Menu";
+}
+<header class="admin-page-header">
+    <div><p class="eyebrow">Menu management</p><h1>Menu</h1></div>
+    <form method="get" class="admin-filter admin-filter--compact" data-loading-form>
+        <label for="restaurantId">Restaurant</label>
+        <select id="restaurantId" name="restaurantId">
+            <option value="">All restaurants</option>
+            @foreach (var restaurant in Model.Restaurants) { <option value="@restaurant.RestaurantId" selected="@(Model.SelectedRestaurantId == restaurant.RestaurantId)">@restaurant.Name</option> }
+        </select>
+        <button class="button button--small" type="submit">Apply</button>
+    </form>
+</header>
+
+<div asp-validation-summary="ModelOnly" class="validation-summary admin-global-validation" role="alert"></div>
+<div class="admin-menu-grid">
+    <section class="admin-panel">
+        <div class="admin-panel__heading"><h2>Categories</h2><span>@Model.Categories.Count total</span></div>
+        <form asp-action="CreateCategory" asp-route-restaurantId="@Model.SelectedRestaurantId" method="post" class="admin-inline-form">
+            <div class="form-field"><label asp-for="CategoryForm.Name"></label><input asp-for="CategoryForm.Name" placeholder="e.g. Main courses" /><span asp-validation-for="CategoryForm.Name" class="field-validation"></span></div>
+            <button class="button button--small" type="submit">Add category</button>
+        </form>
+        <div class="admin-list">
+            @foreach (var category in Model.Categories)
+            {
+                <div><strong>@category.Name</strong><span class="admin-actions">
+                    <a class="button button--small button--ghost" asp-action="EditCategory" asp-route-id="@category.CategoryId">Edit</a>
+                    <form asp-action="DeleteCategory" asp-route-id="@category.CategoryId" asp-route-restaurantId="@Model.SelectedRestaurantId" method="post" data-confirm-form data-confirm-title="Delete category?" data-confirm-message="A category can only be deleted when it contains no menu items."><button class="button button--small button--danger" type="submit">Delete</button></form>
+                </span></div>
+            }
+            @if (Model.Categories.Count == 0) { <p class="admin-empty">No categories have been added.</p> }
+        </div>
+    </section>
+
+    <section class="admin-panel admin-panel--form">
+        <div class="admin-panel__heading"><h2>Add menu item</h2></div>
+        <form asp-action="CreateItem" method="post">
+            <div class="form-row">
+                <div class="form-field"><label asp-for="ItemForm.RestaurantId"></label><select asp-for="ItemForm.RestaurantId"><option value="">Choose a restaurant</option>@foreach (var restaurant in Model.Restaurants) { <option value="@restaurant.RestaurantId">@restaurant.Name</option> }</select><span asp-validation-for="ItemForm.RestaurantId" class="field-validation"></span></div>
+                <div class="form-field"><label asp-for="ItemForm.CategoryId"></label><select asp-for="ItemForm.CategoryId"><option value="">Choose a category</option>@foreach (var category in Model.Categories) { <option value="@category.CategoryId">@category.Name</option> }</select><span asp-validation-for="ItemForm.CategoryId" class="field-validation"></span></div>
+            </div>
+            <div class="form-row">
+                <div class="form-field"><label asp-for="ItemForm.Name"></label><input asp-for="ItemForm.Name" /><span asp-validation-for="ItemForm.Name" class="field-validation"></span></div>
+                <div class="form-field"><label asp-for="ItemForm.Price"></label><input asp-for="ItemForm.Price" type="number" min="0.01" step="0.01" /><span asp-validation-for="ItemForm.Price" class="field-validation"></span></div>
+            </div>
+            <label class="check-field"><input asp-for="ItemForm.Available" /> <span>Available for ordering</span></label>
+            <button class="button" type="submit">Create menu item</button>
+        </form>
+    </section>
+</div>
+
+<section class="admin-panel admin-panel--spaced">
+    <div class="admin-panel__heading"><h2>Menu items</h2><span>@Model.Items.Count shown</span></div>
+    @if (Model.Items.Count == 0) { <p class="admin-empty">No menu items match this restaurant.</p> }
+    else
+    {
+        <div class="admin-table-wrap"><table class="admin-table">
+            <thead><tr><th>Item</th><th>Restaurant</th><th>Category</th><th>Price</th><th>Availability</th><th>Actions</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr><td><strong>@item.Name</strong></td><td>@item.RestaurantName</td><td>@item.CategoryName</td><td>@item.Price.ToString("N0") VND</td><td><span class="status-badge status-badge--@(item.Available ? "available" : "maintenance")">@(item.Available ? "Available" : "Unavailable")</span></td><td class="admin-actions">
+                    <a class="button button--small button--ghost" asp-action="EditItem" asp-route-id="@item.MenuItemId">Edit</a>
+                    <form asp-action="DeleteItem" asp-route-id="@item.MenuItemId" asp-route-restaurantId="@Model.SelectedRestaurantId" method="post" data-confirm-form data-confirm-title="Delete menu item?" data-confirm-message="This item will be permanently deleted if it has no order history."><button class="button button--small button--danger" type="submit">Delete</button></form>
+                </td></tr>
+            }
+            </tbody>
+        </table></div>
+    }
+</section>
+<partial name="~/Views/Shared/_ConfirmDialogPartial.cshtml" />
+@section Scripts { <script src="~/js/validation.js" asp-append-version="true"></script> }

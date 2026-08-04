@@ -1,0 +1,134 @@
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var overview = Model.Overview;
+    var growthClass = overview.RevenueGrowthPercent >= 0 ? "metric-change--positive" : "metric-change--negative";
+}
+<header class="admin-page-header dashboard-header">
+    <div>
+        <p class="eyebrow">Daily overview</p>
+        <h1>Dashboard</h1>
+        <p class="dashboard-context">Showing operational data for <strong>@Model.SelectedRestaurantName</strong>.</p>
+    </div>
+    @if (!Model.HasError)
+    {
+        <form method="get" class="admin-filter admin-filter--compact" data-loading-form>
+            <label for="restaurantId">Restaurant</label>
+            <select id="restaurantId" name="restaurantId" onchange="this.form.submit()">
+                <option value="">All restaurants</option>
+                @foreach (var restaurant in Model.Restaurants)
+                {
+                    <option value="@restaurant.RestaurantId" selected="@(Model.RestaurantId == restaurant.RestaurantId)">@restaurant.Name</option>
+                }
+            </select>
+            <button class="button button--small" type="submit">Apply</button>
+        </form>
+    }
+</header>
+
+<div class="dashboard-loading" data-loading-state hidden role="status" aria-live="polite">
+    <span class="loading-spinner" aria-hidden="true"></span>
+    <span>Loading dashboard data...</span>
+</div>
+
+@if (Model.HasError)
+{
+    <section class="dashboard-error" role="alert">
+        <p class="eyebrow">Unable to load</p>
+        <h2>Dashboard data is unavailable</h2>
+        <p>@Model.ErrorMessage</p>
+        <a class="button" asp-action="Index">Try again</a>
+    </section>
+}
+else
+{
+    <section class="dashboard-metrics" aria-label="Today's key statistics">
+        <article class="metric-card metric-card--primary">
+            <p>Today's revenue</p>
+            <strong>@overview.TodayRevenue.ToString("N0") <small>VND</small></strong>
+            <span class="metric-change @growthClass">@overview.RevenueGrowthPercent.ToString("+0.##;-0.##;0")% vs yesterday</span>
+        </article>
+        <article class="metric-card">
+            <p>Today's reservations</p>
+            <strong>@overview.TodayReservations</strong>
+            <span>@overview.PendingReservations pending</span>
+        </article>
+        <article class="metric-card">
+            <p>Total customers</p>
+            <strong>@overview.TotalCustomers</strong>
+            <span>+@overview.NewCustomersThisMonth this month</span>
+        </article>
+        <article class="metric-card">
+            <p>Table occupancy</p>
+            <strong>@overview.TableOccupancyPercent.ToString("0.##")%</strong>
+            <span>@overview.OccupiedTablesNow of @overview.TotalTables tables occupied</span>
+        </article>
+    </section>
+
+    <section class="dashboard-status-grid" aria-label="Reservation status summary">
+        <article><span class="status-dot status-dot--pending"></span><div><strong>@overview.PendingReservations</strong><p>Pending</p></div></article>
+        <article><span class="status-dot status-dot--confirmed"></span><div><strong>@overview.ConfirmedReservations</strong><p>Confirmed</p></div></article>
+        <article><span class="status-dot status-dot--cancelled"></span><div><strong>@overview.CancelledReservations</strong><p>Cancelled</p></div></article>
+        <article><span class="status-dot status-dot--tables"></span><div><strong>@overview.TotalTables</strong><p>Total tables</p></div></article>
+    </section>
+
+    <div class="dashboard-detail-grid">
+        <section class="admin-panel dashboard-chart-panel">
+            <div class="admin-panel__heading">
+                <div><p class="eyebrow">Last 7 days</p><h2>Reservation trend</h2></div>
+                <span>Total reservations per day</span>
+            </div>
+            @if (!Model.HasTrendData)
+            {
+                <div class="dashboard-empty">
+                    <strong>No reservation activity</strong>
+                    <p>There are no reservations in the selected seven-day period.</p>
+                </div>
+            }
+            else
+            {
+                <div class="reservation-chart" role="img" aria-label="Bar chart of reservation totals for the last seven days">
+                    @foreach (var point in Model.Trend)
+                    {
+                        <div class="reservation-chart__column">
+                            <span class="reservation-chart__value">@point.TotalReservations</span>
+                            <div class="reservation-chart__track">
+                                <span class="reservation-chart__bar" style="height: @point.BarPercentCss%" title="@point.Date.ToString("dd MMM"): @point.TotalReservations reservations"></span>
+                            </div>
+                            <span class="reservation-chart__label">@point.Date.ToString("ddd")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+        <aside class="admin-panel dashboard-operations">
+            <div class="admin-panel__heading"><h2>Operations</h2></div>
+            <div><span>Occupied now</span><strong>@overview.OccupiedTablesNow</strong></div>
+            <div><span>Available tables</span><strong>@Math.Max(0, overview.TotalTables - overview.OccupiedTablesNow)</strong></div>
+            <div><span>Yesterday's revenue</span><strong>@overview.YesterdayRevenue.ToString("N0") VND</strong></div>
+            <div><span>New customers</span><strong>@overview.NewCustomersThisMonth</strong></div>
+        </aside>
+    </div>
+
+    <section class="admin-panel admin-panel--spaced">
+        <div class="admin-panel__heading"><h2>Seven-day summary</h2><span>@Model.Trend.Sum(item => item.TotalReservations) reservations</span></div>
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead><tr><th>Date</th><th>Total</th><th>Pending</th><th>Confirmed</th><th>Cancelled</th></tr></thead>
+                <tbody>
+                @foreach (var point in Model.Trend)
+                {
+                    <tr>
+                        <td><strong>@point.Date.ToString("dd MMM yyyy")</strong></td>
+                        <td>@point.TotalReservations</td>
+                        <td>@point.Pending</td>
+                        <td>@point.Confirmed</td>
+                        <td>@point.Cancelled</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}

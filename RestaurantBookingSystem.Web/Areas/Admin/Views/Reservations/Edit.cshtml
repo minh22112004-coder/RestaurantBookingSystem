@@ -1,0 +1,34 @@
+@model AdminReservationEditViewModel
+@{ ViewData["Title"] = "Edit reservation"; }
+<header class="admin-page-header">
+    <div><p class="eyebrow">Reservation management</p><h1>Edit reservation #@Model.ReservationId</h1></div>
+    <a class="button button--ghost" asp-action="Index" asp-route-date="@Model.Form.Date.ToString("yyyy-MM-dd")">Back to reservations</a>
+</header>
+<section class="admin-panel admin-editor">
+    <form asp-action="Edit" asp-route-id="@Model.ReservationId" method="post">
+        <input type="hidden" name="userId" value="@Model.UserId" />
+        <input type="hidden" name="status" value="@Model.Status" />
+        <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
+        <div class="form-field">
+            <label asp-for="Form.TableId"></label>
+            <select asp-for="Form.TableId">
+                <option value="">Choose a table</option>
+                @foreach (var table in Model.Tables)
+                {
+                    <option value="@table.TableId">@Model.RestaurantName(table.RestaurantId) - @table.TableNumber (@table.Capacity guests, @table.Status)</option>
+                }
+            </select>
+            <span asp-validation-for="Form.TableId" class="field-validation"></span>
+        </div>
+        <div class="form-row">
+            <div class="form-field"><label asp-for="Form.Date"></label><input asp-for="Form.Date" type="date" /><span asp-validation-for="Form.Date" class="field-validation"></span></div>
+            <div class="form-field"><label asp-for="Form.GuestCount"></label><input asp-for="Form.GuestCount" type="number" min="1" /><span asp-validation-for="Form.GuestCount" class="field-validation"></span></div>
+        </div>
+        <div class="form-row">
+            <div class="form-field"><label asp-for="Form.StartTime"></label><input asp-for="Form.StartTime" type="time" /><span asp-validation-for="Form.StartTime" class="field-validation"></span></div>
+            <div class="form-field"><label asp-for="Form.EndTime"></label><input asp-for="Form.EndTime" type="time" /><span asp-validation-for="Form.EndTime" class="field-validation"></span></div>
+        </div>
+        <div class="admin-form-actions"><button class="button" type="submit">Save changes</button><a asp-action="Index" asp-route-date="@Model.Form.Date.ToString("yyyy-MM-dd")">Cancel</a></div>
+    </form>
+</section>
+@section Scripts { <script src="~/js/validation.js" asp-append-version="true"></script> }

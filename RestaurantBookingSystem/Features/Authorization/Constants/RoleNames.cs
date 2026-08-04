@@ -1,6 +1,6 @@
 ﻿namespace RestaurantBookingSystem.Features.Authorization.Constants;
 
-// Khớp đúng dữ liệu seed trong RestaurantReservationDB.sql:
+// These values must match the seeded roles in RestaurantReservationDB.sql:
 // INSERT INTO [Role] (RoleName) VALUES ('Admin'), ('Manager'), ('Customer');
 public static class RoleNames
 {

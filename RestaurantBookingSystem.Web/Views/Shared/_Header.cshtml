@@ -1,0 +1,46 @@
+@inject IJwtSessionService SessionService
+@{
+    var currentUser = SessionService.Current;
+    var currentPath = Context.Request.Path.Value ?? "/";
+    string? CurrentPage(string path, bool exact = false) =>
+        exact ? (string.Equals(currentPath, path, StringComparison.OrdinalIgnoreCase) ? "page" : null)
+              : (currentPath.StartsWith(path, StringComparison.OrdinalIgnoreCase) ? "page" : null);
+}
+<header class="site-header">
+    <div class="container header-inner">
+        <a class="brand" href="/" aria-label="Table and Taste - Home">
+            <span class="brand-mark">T</span>
+            <span>Table &amp; Taste</span>
+        </a>
+        <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="primary-nav">
+            Menu
+        </button>
+        <nav id="primary-nav" class="primary-nav" aria-label="Primary navigation">
+            <a href="/" aria-current="@CurrentPage("/", exact: true)">Home</a>
+            <a href="/restaurants" aria-current="@CurrentPage("/restaurants")">Restaurants</a>
+            @if (currentUser is null)
+            {
+                <a href="/account/login" aria-current="@CurrentPage("/account/login")">Sign in</a>
+                <a class="button button--small" href="/account/register" aria-current="@CurrentPage("/account/register")">Create account</a>
+            }
+            else if (currentUser.IsAdmin)
+            {
+                <a href="/admin" aria-current="@CurrentPage("/admin")">Admin</a>
+                <form class="nav-logout-form" action="/account/logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button class="link-button" type="submit">Sign out</button>
+                </form>
+            }
+            else
+            {
+                <a href="/reservations" aria-current="@CurrentPage("/reservations")">Reservations</a>
+                <a class="notification-link" href="/notifications" aria-current="@CurrentPage("/notifications")">Notifications @await Component.InvokeAsync("NotificationBadge")</a>
+                <a href="/account/profile" aria-current="@CurrentPage("/account/profile")">@currentUser.Username</a>
+                <form class="nav-logout-form" action="/account/logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button class="link-button" type="submit">Sign out</button>
+                </form>
+            }
+        </nav>
+    </div>
+</header>

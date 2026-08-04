@@ -28,7 +28,7 @@ namespace RestaurantBookingSystem.Features.Dashboard.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", error = ex.Message });
+                return StatusCode(500, new { message = "A system error occurred.", error = ex.Message });
             }
         }
 
@@ -42,7 +42,7 @@ namespace RestaurantBookingSystem.Features.Dashboard.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", error = ex.Message });
+                return StatusCode(500, new { message = "A system error occurred.", error = ex.Message });
             }
         }
 
@@ -56,7 +56,7 @@ namespace RestaurantBookingSystem.Features.Dashboard.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", error = ex.Message });
+                return StatusCode(500, new { message = "A system error occurred.", error = ex.Message });
             }
         }
 
@@ -70,7 +70,7 @@ namespace RestaurantBookingSystem.Features.Dashboard.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", error = ex.Message });
+                return StatusCode(500, new { message = "A system error occurred.", error = ex.Message });
             }
         }
 
@@ -84,7 +84,7 @@ namespace RestaurantBookingSystem.Features.Dashboard.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", error = ex.Message });
+                return StatusCode(500, new { message = "A system error occurred.", error = ex.Message });
             }
         }
 
@@ -98,7 +98,7 @@ namespace RestaurantBookingSystem.Features.Dashboard.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", error = ex.Message });
+                return StatusCode(500, new { message = "A system error occurred.", error = ex.Message });
             }
         }
 
@@ -112,7 +112,7 @@ namespace RestaurantBookingSystem.Features.Dashboard.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", error = ex.Message });
+                return StatusCode(500, new { message = "A system error occurred.", error = ex.Message });
             }
         }
     }

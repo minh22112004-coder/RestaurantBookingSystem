@@ -1,0 +1,27 @@
+@model ProfileViewModel
+@{
+    ViewData["Title"] = "Profile";
+    Layout = "_CustomerLayout";
+}
+
+<section class="profile-page">
+    <div class="section-heading">
+        <p class="eyebrow">My account</p>
+        <h1>Profile</h1>
+        <p>Your identity details are synchronized from the signed-in account.</p>
+    </div>
+
+    <div class="profile-card">
+        <div class="profile-avatar" aria-hidden="true">@Model.Username[..1].ToUpperInvariant()</div>
+        <div class="profile-identity">
+            <h2>@Model.Username</h2>
+            <span class="role-badge">@Model.Role</span>
+        </div>
+        <dl class="profile-details">
+            <div><dt>User ID</dt><dd>#@Model.UserId</dd></div>
+            <div><dt>Username</dt><dd>@Model.Username</dd></div>
+            <div><dt>Email</dt><dd>@Model.Email</dd></div>
+            <div><dt>Role</dt><dd>@Model.Role</dd></div>
+        </dl>
+    </div>
+</section>

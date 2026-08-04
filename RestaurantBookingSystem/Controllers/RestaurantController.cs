@@ -1,75 +1,75 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RestaurantBookingSystem.DTOs.Restaurant;
+using RestaurantBookingSystem.Features.Authorization.Policies;
 using RestaurantBookingSystem.Services.Interfaces;
 
-namespace Function_2.Controllers
+namespace RestaurantBookingSystem.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class RestaurantController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class RestaurantController : ControllerBase
+    private readonly IRestaurantService _restaurantService;
+
+    public RestaurantController(IRestaurantService restaurantService)
     {
-        private readonly IRestaurantService _restaurantService;
+        _restaurantService = restaurantService;
+    }
 
-        public RestaurantController(IRestaurantService restaurantService)
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> GetAll() => Ok(await _restaurantService.GetAllAsync());
+
+    [AllowAnonymous]
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var restaurant = await _restaurantService.GetByIdAsync(id);
+        return restaurant is null ? NotFound() : Ok(restaurant);
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] RestaurantCreateDto dto)
+    {
+        try
         {
-            _restaurantService = restaurantService;
+            var restaurant = await _restaurantService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = restaurant.RestaurantId }, restaurant);
         }
-
-        [HttpGet]
-        public IActionResult GetAll()
+        catch (InvalidOperationException ex)
         {
-            return Ok(_restaurantService.GetAll());
+            return BadRequest(new { message = ex.Message });
         }
+    }
 
-        [HttpGet("{id}")]
-        public IActionResult GetById(int id)
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, [FromBody] RestaurantUpdateDto dto)
+    {
+        try
         {
-            var restaurant = _restaurantService.GetById(id);
-
-            if (restaurant == null)
-                return NotFound();
-
-            return Ok(restaurant);
+            return await _restaurantService.UpdateAsync(id, dto) ? NoContent() : NotFound();
         }
-
-        [HttpPost]
-        public IActionResult Create([FromBody] RestaurantCreateDto dto)
+        catch (InvalidOperationException ex)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var restaurant = _restaurantService.Create(dto);
-
-            return CreatedAtAction(nameof(GetById),
-                new { id = restaurant.RestaurantId },
-                restaurant);
+            return BadRequest(new { message = ex.Message });
         }
+    }
 
-        [HttpPut("{id}")]
-        public IActionResult Update(int id, [FromBody] RestaurantUpdateDto dto)
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (!_restaurantService.Update(id, dto))
-            {
-                return NotFound();
-            }
-
-            return NoContent();
+            return await _restaurantService.DeleteAsync(id) ? NoContent() : NotFound();
         }
-
-        [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        catch (DbUpdateException)
         {
-            if (!_restaurantService.Delete(id))
-                return NotFound();
-
-            return NoContent();
+            return Conflict(new { message = "The restaurant has related data and cannot be deleted." });
         }
     }
 }

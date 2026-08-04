@@ -1,0 +1,189 @@
+@using System.Globalization
+@inject IJwtSessionService SessionService
+@model RestaurantDetailsViewModel
+@{
+    ViewData["Title"] = Model.Restaurant?.Name ?? "Restaurant details";
+    var restaurant = Model.Restaurant;
+    var canBook = SessionService.Current?.IsCustomer == true;
+}
+
+@if (restaurant is null)
+{
+    <section class="container state-card state-card--standalone @(Model.HasError ? "state-card--error" : string.Empty)">
+        <span class="state-card__mark" aria-hidden="true">!</span>
+        <p class="eyebrow">Restaurant unavailable</p>
+        <h1>We could not open this restaurant.</h1>
+        <p>@Model.ErrorMessage</p>
+        <a class="button" href="/restaurants">Back to restaurants</a>
+    </section>
+}
+else
+{
+    <section class="restaurant-detail-hero">
+        <div class="container restaurant-detail-hero__grid">
+            <div>
+                <nav class="breadcrumbs" aria-label="Breadcrumb">
+                    <a href="/">Home</a><span>/</span><a href="/restaurants">Restaurants</a><span>/</span><span aria-current="page">@restaurant.Name</span>
+                </nav>
+                <p class="eyebrow">Restaurant #@restaurant.RestaurantId</p>
+                <h1>@restaurant.Name</h1>
+                <p class="restaurant-detail-hero__address">@restaurant.Address</p>
+                <div class="restaurant-detail-hero__actions">
+                    <a class="button" href="#tables">Explore tables</a>
+                    <a class="text-link" href="tel:@restaurant.Phone">@restaurant.Phone</a>
+                </div>
+            </div>
+            <dl class="restaurant-facts">
+                <div><dt>Opening hours</dt><dd>@restaurant.OpenTime.ToString("HH:mm") - @restaurant.CloseTime.ToString("HH:mm")</dd></div>
+                <div><dt>Menu items</dt><dd>@Model.MenuItems.Count</dd></div>
+                <div><dt>Dining tables</dt><dd>@Model.Tables.Count</dd></div>
+            </dl>
+        </div>
+    </section>
+
+    @if (Model.HasError)
+    {
+        <section class="container state-card state-card--error detail-error">
+            <span class="state-card__mark" aria-hidden="true">!</span>
+            <p class="eyebrow">Some details are unavailable</p>
+            <h2>We loaded the restaurant, but not everything else.</h2>
+            <p>@Model.ErrorMessage</p>
+            <a class="button" href="/restaurants/@restaurant.RestaurantId">Try again</a>
+        </section>
+    }
+    else
+    {
+        <section class="container detail-section" aria-labelledby="menu-title">
+            <div class="detail-section__heading">
+                <div><p class="eyebrow">Preview the kitchen</p><h2 id="menu-title">Menu</h2></div>
+                <p>Prices are shown in Vietnamese dong and availability is updated by the restaurant.</p>
+            </div>
+            @if (Model.MenuItems.Count == 0)
+            {
+                <div class="inline-empty"><span aria-hidden="true">M</span><div><h3>No menu published yet</h3><p>This restaurant has not added menu items.</p></div></div>
+            }
+            else
+            {
+                <div class="menu-groups">
+                    @foreach (var group in Model.MenuGroups)
+                    {
+                        <section class="menu-group">
+                            <h3>@group.Key</h3>
+                            <div>
+                                @foreach (var item in group)
+                                {
+                                    <article class="menu-item @(item.Available ? string.Empty : "menu-item--unavailable")">
+                                        <div><h4>@item.Name</h4><span>@(item.Available ? "Available" : "Currently unavailable")</span></div>
+                                        <strong>@item.Price.ToString("N0", CultureInfo.InvariantCulture) VND</strong>
+                                    </article>
+                                }
+                            </div>
+                        </section>
+                    }
+                </div>
+            }
+        </section>
+
+        <section id="tables" class="table-section">
+            <div class="container">
+                <div class="detail-section__heading">
+                    <div><p class="eyebrow">Choose your setting</p><h2>Dining tables</h2></div>
+                    <p>Table availability is a live restaurant status. Final availability is checked during reservation.</p>
+                </div>
+                @if (Model.Tables.Count == 0)
+                {
+                    <div class="inline-empty"><span aria-hidden="true">T</span><div><h3>No tables listed yet</h3><p>Please contact the restaurant for seating information.</p></div></div>
+                }
+                else
+                {
+                    <div class="table-grid">
+                        @foreach (var table in Model.Tables.OrderBy(table => table.Capacity).ThenBy(table => table.TableNumber))
+                        {
+                            var isAvailable = string.Equals(table.Status, "Available", StringComparison.OrdinalIgnoreCase);
+                            <article class="table-card @(isAvailable ? "table-card--available" : string.Empty)">
+                                <div><span class="status-dot" aria-hidden="true"></span><small>@(isAvailable ? "Available" : table.Status)</small></div>
+                                <h3>Table @table.TableNumber</h3>
+                                <p>Seats up to <strong>@table.Capacity</strong> @(table.Capacity == 1 ? "guest" : "guests")</p>
+                                @if (isAvailable)
+                                {
+                                    @if (canBook)
+                                    {
+                                        <button class="text-link table-choice-button" type="button" data-table-choice="@table.TableId">Use this table</button>
+                                    }
+                                    else
+                                    {
+                                        <a class="text-link" href="/account/login?returnUrl=@Uri.EscapeDataString($"/restaurants/{restaurant.RestaurantId}#booking")">Sign in to reserve</a>
+                                    }
+                                }
+                            </article>
+                        }
+                    </div>
+                }
+
+                @if (Model.Tables.Any(table => string.Equals(table.Status, "Available", StringComparison.OrdinalIgnoreCase)))
+                {
+                    <section id="booking" class="booking-panel">
+                        @if (canBook)
+                        {
+                            <div class="booking-panel__intro">
+                                <p class="eyebrow">Request a reservation</p>
+                                <h2>Plan your visit.</h2>
+                                <p>Choose an available table and a time within the restaurant's opening hours. The restaurant will confirm your request.</p>
+                            </div>
+                            <form asp-controller="RestaurantView" asp-action="Book" asp-route-id="@restaurant.RestaurantId" method="post" class="booking-form" data-validated-form data-reservation-form novalidate>
+                                <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
+                                <div class="form-field booking-form__table">
+                                    <label asp-for="BookingForm.TableId"></label>
+                                    <select asp-for="BookingForm.TableId" required data-required-message="Please choose a table.">
+                                        <option value="">Choose a table</option>
+                                        @foreach (var table in Model.Tables.Where(table => string.Equals(table.Status, "Available", StringComparison.OrdinalIgnoreCase)).OrderBy(table => table.Capacity))
+                                        {
+                                            <option value="@table.TableId" data-capacity="@table.Capacity">Table @table.TableNumber - up to @table.Capacity guests</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="BookingForm.TableId" class="field-validation"></span>
+                                </div>
+                                <div class="form-field">
+                                    <label asp-for="BookingForm.Date"></label>
+                                    <input asp-for="BookingForm.Date" min="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" required data-required-message="Please choose a date." data-invalid-message="Choose today or a future date." />
+                                    <span asp-validation-for="BookingForm.Date" class="field-validation"></span>
+                                </div>
+                                <div class="form-field">
+                                    <label asp-for="BookingForm.GuestCount"></label>
+                                    <input asp-for="BookingForm.GuestCount" type="number" min="1" max="100" required data-invalid-message="Enter a valid number of guests." />
+                                    <span class="capacity-hint" data-capacity-hint></span>
+                                    <span asp-validation-for="BookingForm.GuestCount" class="field-validation"></span>
+                                </div>
+                                <div class="form-field">
+                                    <label asp-for="BookingForm.StartTime"></label>
+                                    <input asp-for="BookingForm.StartTime" min="@restaurant.OpenTime.ToString("HH:mm")" max="@restaurant.CloseTime.ToString("HH:mm")" required data-required-message="Please choose a start time." data-invalid-message="Choose a time within opening hours." />
+                                    <span asp-validation-for="BookingForm.StartTime" class="field-validation"></span>
+                                </div>
+                                <div class="form-field">
+                                    <label asp-for="BookingForm.EndTime"></label>
+                                    <input asp-for="BookingForm.EndTime" min="@restaurant.OpenTime.ToString("HH:mm")" max="@restaurant.CloseTime.ToString("HH:mm")" required data-required-message="Please choose an end time." data-invalid-message="The end time must be later than the start time." />
+                                    <span asp-validation-for="BookingForm.EndTime" class="field-validation"></span>
+                                </div>
+                                <button class="button booking-form__submit" type="submit">Submit reservation request</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="booking-gate">
+                                <p class="eyebrow">Ready to reserve?</p>
+                                <h2>Sign in to request this table.</h2>
+                                <p>Your account keeps the reservation and every status update in one secure place.</p>
+                                <a class="button" href="/account/login?returnUrl=@Uri.EscapeDataString($"/restaurants/{restaurant.RestaurantId}#booking")">Sign in to continue</a>
+                            </div>
+                        }
+                    </section>
+                }
+            </div>
+        </section>
+    }
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/reservation.js" asp-append-version="true"></script>
+}

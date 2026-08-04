@@ -1,4 +1,4 @@
-# 🍽️ Restaurant Booking System - Backend
+# Restaurant Booking System - Backend
 
 Backend project for CSW306 using ASP.NET Core Web API and Entity Framework Core.
 
@@ -25,7 +25,7 @@ git pull origin dev
 
 ## 3. Create your own feature branch
 
-⚠️ Create your branch from `dev`.
+Important: create your branch from `dev`.
 
 Example:
 
@@ -115,8 +115,8 @@ After finishing your feature:
 
 ```
 feature/your-branch
-        │
-        ▼
+        |
+        v
        dev
 ```
 
@@ -128,19 +128,19 @@ Wait for review before merging.
 
 ```
 master
-    ▲
-    │
+    ^
+    |
    PR
-    │
+    |
    dev
-    ▲
-    │
+    ^
+    |
 feature/*
 ```
 
-- master → Stable release
-- dev → Development branch
-- feature/* → Personal working branch
+- master -> Stable release
+- dev -> Development branch
+- feature/* -> Personal working branch
 
 ---
 
@@ -148,22 +148,20 @@ feature/*
 
 ```
 RestaurantBooking.API
-│
-├── Features
-│   ├── Authentication
-│   ├── Restaurant
-│   ├── Reservation
-│   ├── Menu
-│   ├── Notification
-│   └── Dashboard
-│
-├── Models
-├── Data
-├── Configurations
-├── Middleware
-├── Helpers
-├── Mapping
-└── Program.cs
+|-- Features
+|   |-- Authentication
+|   |-- Restaurant
+|   |-- Reservation
+|   |-- Menu
+|   |-- Notification
+|   `-- Dashboard
+|-- Models
+|-- Data
+|-- Configurations
+|-- Middleware
+|-- Helpers
+|-- Mapping
+`-- Program.cs
 ```
 
 ---
@@ -210,7 +208,7 @@ abc
 | Nam | Reservation |
 | Huy | Menu |
 | Linh | Restaurant & Table |
-| Phúc | Notification |
+| Phuc | Notification |
 | An | Dashboard |
 
 ---
@@ -227,4 +225,4 @@ abc
 
 ---
 
-Happy Coding 🚀
+Happy coding.

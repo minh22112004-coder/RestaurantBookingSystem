@@ -1,0 +1,19 @@
+@model AdminMenuItemEditViewModel
+@{ ViewData["Title"] = "Edit menu item"; }
+<header class="admin-page-header"><div><p class="eyebrow">Menu management</p><h1>Edit menu item</h1></div><a class="button button--ghost" asp-action="Index" asp-route-restaurantId="@Model.Form.RestaurantId">Back to menu</a></header>
+<section class="admin-panel admin-editor">
+    <form asp-action="EditItem" asp-route-id="@Model.MenuItemId" method="post">
+        <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
+        <div class="form-row">
+            <div class="form-field"><label asp-for="Form.RestaurantId"></label><select asp-for="Form.RestaurantId">@foreach (var restaurant in Model.Restaurants) { <option value="@restaurant.RestaurantId">@restaurant.Name</option> }</select><span asp-validation-for="Form.RestaurantId" class="field-validation"></span></div>
+            <div class="form-field"><label asp-for="Form.CategoryId"></label><select asp-for="Form.CategoryId">@foreach (var category in Model.Categories) { <option value="@category.CategoryId">@category.Name</option> }</select><span asp-validation-for="Form.CategoryId" class="field-validation"></span></div>
+        </div>
+        <div class="form-row">
+            <div class="form-field"><label asp-for="Form.Name"></label><input asp-for="Form.Name" /><span asp-validation-for="Form.Name" class="field-validation"></span></div>
+            <div class="form-field"><label asp-for="Form.Price"></label><input asp-for="Form.Price" type="number" min="0.01" step="0.01" /><span asp-validation-for="Form.Price" class="field-validation"></span></div>
+        </div>
+        <label class="check-field"><input asp-for="Form.Available" /> <span>Available for ordering</span></label>
+        <div class="admin-form-actions"><button class="button" type="submit">Save changes</button><a asp-action="Index" asp-route-restaurantId="@Model.Form.RestaurantId">Cancel</a></div>
+    </form>
+</section>
+@section Scripts { <script src="~/js/validation.js" asp-append-version="true"></script> }

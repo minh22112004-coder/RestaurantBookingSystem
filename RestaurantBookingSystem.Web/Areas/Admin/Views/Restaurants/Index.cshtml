@@ -1,0 +1,52 @@
+@model AdminRestaurantIndexViewModel
+@{
+    ViewData["Title"] = "Restaurants";
+}
+<header class="admin-page-header">
+    <div><p class="eyebrow">Restaurant management</p><h1>Restaurants</h1></div>
+    <p>Manage restaurant contact details and opening hours.</p>
+</header>
+
+<div class="admin-split">
+    <section class="admin-panel">
+        <div class="admin-panel__heading"><h2>Restaurant list</h2><span>@Model.Restaurants.Count total</span></div>
+        @if (Model.Restaurants.Count == 0)
+        {
+            <p class="admin-empty">No restaurants have been added.</p>
+        }
+        else
+        {
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead><tr><th>Name</th><th>Contact</th><th>Hours</th><th>Actions</th></tr></thead>
+                    <tbody>
+                    @foreach (var restaurant in Model.Restaurants)
+                    {
+                        <tr>
+                            <td><strong>@restaurant.Name</strong><small>@restaurant.Address</small></td>
+                            <td>@restaurant.Phone</td>
+                            <td>@restaurant.OpenTime.ToString("HH:mm") - @restaurant.CloseTime.ToString("HH:mm")</td>
+                            <td class="admin-actions">
+                                <a class="button button--small button--ghost" asp-action="Edit" asp-route-id="@restaurant.RestaurantId">Edit</a>
+                                <form asp-action="Delete" asp-route-id="@restaurant.RestaurantId" method="post" data-confirm-form data-confirm-title="Delete restaurant?" data-confirm-message="The restaurant will be permanently deleted if it has no related data.">
+                                    <button class="button button--small button--danger" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <section class="admin-panel admin-panel--form">
+        <div class="admin-panel__heading"><h2>Add restaurant</h2></div>
+        <form asp-action="Create" method="post">
+            <partial name="_Form" for="Form" />
+            <button class="button" type="submit">Create restaurant</button>
+        </form>
+    </section>
+</div>
+<partial name="~/Views/Shared/_ConfirmDialogPartial.cshtml" />
+@section Scripts { <script src="~/js/validation.js" asp-append-version="true"></script> }

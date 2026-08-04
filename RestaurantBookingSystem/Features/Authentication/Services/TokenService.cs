@@ -21,17 +21,17 @@ public class TokenService : ITokenService
     {
         string jwtKey = _configuration["Jwt:Key"]
             ?? throw new InvalidOperationException(
-                "Không tìm thấy cấu hình Jwt:Key."
+                "Missing Jwt:Key configuration."
             );
 
         string issuer = _configuration["Jwt:Issuer"]
             ?? throw new InvalidOperationException(
-                "Không tìm thấy cấu hình Jwt:Issuer."
+                "Missing Jwt:Issuer configuration."
             );
 
         string audience = _configuration["Jwt:Audience"]
             ?? throw new InvalidOperationException(
-                "Không tìm thấy cấu hình Jwt:Audience."
+                "Missing Jwt:Audience configuration."
             );
 
         var claims = new List<Claim>

@@ -35,6 +35,9 @@ public class AuthController : ControllerBase
         string email = request.Email.Trim().ToLowerInvariant();
         string username = request.Username.Trim();
 
+        if (username.Length == 0)
+            return BadRequest(new { message = "Username cannot contain only whitespace." });
+
         bool emailTaken = await _context.Users
             .AnyAsync(u => u.Email == email);
 
@@ -42,7 +45,7 @@ public class AuthController : ControllerBase
         {
             return Conflict(new
             {
-                message = "Email đã được sử dụng."
+                message = "The email address is already in use."
             });
         }
 
@@ -53,7 +56,7 @@ public class AuthController : ControllerBase
         {
             return Conflict(new
             {
-                message = "Tên đăng nhập đã được sử dụng."
+                message = "The username is already in use."
             });
         }
 
@@ -61,12 +64,12 @@ public class AuthController : ControllerBase
         {
             Username = username,
             Email = email,
-            Phone = request.Phone
+            Phone = request.Phone?.Trim()
         };
 
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
 
-        // Gán role mặc định "Customer" (many-to-many qua navigation, không cần bảng UserRole thủ công)
+        // Assign the default Customer role through the many-to-many navigation.
         Role? customerRole = await _context.Roles
             .FirstOrDefaultAsync(r => r.RoleName == RoleNames.Customer);
 
@@ -74,7 +77,7 @@ public class AuthController : ControllerBase
         {
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
-                new { message = $"Không tìm thấy role '{RoleNames.Customer}'. Hãy chạy seed role trước." }
+                new { message = $"Role '{RoleNames.Customer}' was not found. Seed the roles before registering users." }
             );
         }
 
@@ -109,32 +112,43 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login(
         [FromBody] LoginRequest request)
     {
-        string email = request.Email.Trim().ToLowerInvariant();
+        string login = request.Email.Trim();
+        string normalizedLogin = login.ToLowerInvariant();
 
         User? user = await _context.Users
             .Include(u => u.Roles)
-            .FirstOrDefaultAsync(u => u.Email == email);
+            .FirstOrDefaultAsync(u =>
+                u.Email == normalizedLogin ||
+                u.Username.ToLower() == normalizedLogin);
 
         if (user is null)
         {
             return Unauthorized(new
             {
-                message = "Email hoặc mật khẩu không đúng."
+                message = "Email, username, or password is incorrect."
             });
         }
 
-        PasswordVerificationResult verifyResult =
-            _passwordHasher.VerifyHashedPassword(
+        PasswordVerificationResult verifyResult;
+        try
+        {
+            verifyResult = _passwordHasher.VerifyHashedPassword(
                 user,
                 user.PasswordHash,
                 request.Password
             );
+        }
+        catch (FormatException)
+        {
+            // Invalid or legacy password hashes must not make the login endpoint return 500.
+            verifyResult = PasswordVerificationResult.Failed;
+        }
 
         if (verifyResult == PasswordVerificationResult.Failed)
         {
             return Unauthorized(new
             {
-                message = "Email hoặc mật khẩu không đúng."
+                message = "Email, username, or password is incorrect."
             });
         }
 

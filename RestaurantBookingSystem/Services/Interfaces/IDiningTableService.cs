@@ -4,16 +4,16 @@ namespace RestaurantBookingSystem.Services.Interfaces
 {
     public interface IDiningTableService
     {
-        IEnumerable<DiningTableResponseDto> GetAll();
+        Task<IReadOnlyList<DiningTableResponseDto>> GetAllAsync();
 
-        DiningTableResponseDto? GetById(int id);
+        Task<DiningTableResponseDto?> GetByIdAsync(int id);
 
-        IEnumerable<DiningTableResponseDto> GetByRestaurant(int restaurantId);
+        Task<IReadOnlyList<DiningTableResponseDto>> GetByRestaurantAsync(int restaurantId);
 
-        DiningTableResponseDto Create(DiningTableCreateDto dto);
+        Task<DiningTableResponseDto> CreateAsync(DiningTableCreateDto dto);
 
-        bool Update(int id, DiningTableUpdateDto dto);
+        Task<bool> UpdateAsync(int id, DiningTableUpdateDto dto);
 
-        bool Delete(int id);
+        Task<bool> DeleteAsync(int id);
     }
 }

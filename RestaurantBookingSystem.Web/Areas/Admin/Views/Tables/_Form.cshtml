@@ -1,0 +1,19 @@
+@model AdminTableEditViewModel
+<div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
+<div class="form-field">
+    <label asp-for="Form.RestaurantId"></label>
+    <select asp-for="Form.RestaurantId">
+        <option value="">Choose a restaurant</option>
+        @foreach (var restaurant in Model.Restaurants) { <option value="@restaurant.RestaurantId">@restaurant.Name</option> }
+    </select>
+    <span asp-validation-for="Form.RestaurantId" class="field-validation"></span>
+</div>
+<div class="form-row">
+    <div class="form-field"><label asp-for="Form.TableNumber"></label><input asp-for="Form.TableNumber" /><span asp-validation-for="Form.TableNumber" class="field-validation"></span></div>
+    <div class="form-field"><label asp-for="Form.Capacity"></label><input asp-for="Form.Capacity" type="number" min="1" max="20" /><span asp-validation-for="Form.Capacity" class="field-validation"></span></div>
+</div>
+<div class="form-field">
+    <label asp-for="Form.Status"></label>
+    <select asp-for="Form.Status"><option>Available</option><option>Occupied</option><option>Maintenance</option></select>
+    <span asp-validation-for="Form.Status" class="field-validation"></span>
+</div>

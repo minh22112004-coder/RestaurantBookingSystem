@@ -1,0 +1,90 @@
+@model RestaurantListViewModel
+@{
+    ViewData["Title"] = "Restaurants";
+}
+
+<section class="directory-hero">
+    <div class="container directory-hero__inner">
+        <div>
+            <p class="eyebrow">Restaurant directory</p>
+            <h1>Find a place worth gathering around.</h1>
+            <p>Browse every restaurant currently available for online reservations.</p>
+        </div>
+        <form class="restaurant-search" method="get" action="/restaurants" role="search" data-loading-form>
+            <label for="restaurant-search">Search by name or address</label>
+            <div>
+                <input id="restaurant-search" name="search" value="@Model.SearchTerm" placeholder="Try a restaurant or neighborhood" />
+                <button class="button" type="submit">Search</button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+            {
+                <a href="/restaurants">Clear search</a>
+            }
+        </form>
+    </div>
+</section>
+
+<section class="container directory-content" aria-live="polite">
+    <div class="page-loading" data-loading-state hidden role="status">
+        <partial name="_LoadingPartial" />
+    </div>
+
+    @if (Model.HasError)
+    {
+        <section class="state-card state-card--error">
+            <span class="state-card__mark" aria-hidden="true">!</span>
+            <p class="eyebrow">Unable to load restaurants</p>
+            <h2>Please try again in a moment.</h2>
+            <p>@Model.ErrorMessage</p>
+            <a class="button" href="/restaurants">Try again</a>
+        </section>
+    }
+    else if (Model.Restaurants.Count == 0)
+    {
+        <section class="state-card">
+            <span class="state-card__mark" aria-hidden="true">0</span>
+            <p class="eyebrow">No matches found</p>
+            <h2>There is no restaurant to show yet.</h2>
+            <p>@(string.IsNullOrWhiteSpace(Model.SearchTerm) ? "New restaurants will appear here when they are added." : $"No restaurant matched \"{Model.SearchTerm}\". Try a broader search.")</p>
+            @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+            {
+                <a class="button" href="/restaurants">View all restaurants</a>
+            }
+        </section>
+    }
+    else
+    {
+        <div class="directory-heading">
+            <div>
+                <p class="eyebrow">Available now</p>
+                <h2>@Model.Restaurants.Count @(Model.Restaurants.Count == 1 ? "restaurant" : "restaurants")</h2>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+            {
+                <p>Results for <strong>@Model.SearchTerm</strong></p>
+            }
+        </div>
+
+        <div class="restaurant-grid">
+            @for (var index = 0; index < Model.Restaurants.Count; index++)
+            {
+                var restaurant = Model.Restaurants[index];
+                <article class="restaurant-card">
+                    <div class="restaurant-card__visual" aria-hidden="true">
+                        <span>@restaurant.Name[..1].ToUpperInvariant()</span>
+                        <small>@(index + 1).ToString("00")</small>
+                    </div>
+                    <div class="restaurant-card__body">
+                        <p class="restaurant-card__hours">@restaurant.OpenTime.ToString("HH:mm") - @restaurant.CloseTime.ToString("HH:mm")</p>
+                        <h3>@restaurant.Name</h3>
+                        <p class="restaurant-card__address">@restaurant.Address</p>
+                        <div class="restaurant-card__footer">
+                            <a class="text-link" href="/restaurants/@restaurant.RestaurantId">View restaurant</a>
+                            <span>@restaurant.Phone</span>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>

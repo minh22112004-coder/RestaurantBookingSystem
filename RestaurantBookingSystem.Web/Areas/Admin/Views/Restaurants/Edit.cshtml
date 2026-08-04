@@ -1,0 +1,15 @@
+@model AdminRestaurantEditViewModel
+@{
+    ViewData["Title"] = "Edit restaurant";
+}
+<header class="admin-page-header">
+    <div><p class="eyebrow">Restaurant management</p><h1>Edit restaurant</h1></div>
+    <a class="button button--ghost" asp-action="Index">Back to restaurants</a>
+</header>
+<section class="admin-panel admin-editor">
+    <form asp-action="Edit" asp-route-id="@Model.RestaurantId" method="post">
+        <partial name="_Form" for="Form" />
+        <div class="admin-form-actions"><button class="button" type="submit">Save changes</button><a asp-action="Index">Cancel</a></div>
+    </form>
+</section>
+@section Scripts { <script src="~/js/validation.js" asp-append-version="true"></script> }

@@ -4,11 +4,10 @@ namespace RestaurantBookingSystem.Features.Authentication.DTOs
 {
     public class LoginRequest
     {
-        [Required(ErrorMessage = "Email không được để trống.")]
-        [EmailAddress(ErrorMessage = "Email không đúng định dạng.")]
+        [Required(ErrorMessage = "Email or username is required.")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Mật khẩu không được để trống.")]
+        [Required(ErrorMessage = "Password is required.")]
         public string Password { get; set; } = string.Empty;
     }
 }

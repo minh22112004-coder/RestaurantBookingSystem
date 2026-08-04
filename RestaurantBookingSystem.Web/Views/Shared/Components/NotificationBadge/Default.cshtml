@@ -1,0 +1,5 @@
+@model int
+@if (Model > 0)
+{
+    <span class="notification-badge" aria-label="@Model unread notifications">@(Model > 99 ? "99+" : Model)</span>
+}

@@ -50,17 +50,17 @@ builder.Services.AddScoped<IReportService, ReportService>();
 // JWT Authentication
 string jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException(
-        "Không tìm thấy cấu hình Jwt:Key."
+        "Missing Jwt:Key configuration."
     );
 
 string jwtIssuer = builder.Configuration["Jwt:Issuer"]
     ?? throw new InvalidOperationException(
-        "Không tìm thấy cấu hình Jwt:Issuer."
+        "Missing Jwt:Issuer configuration."
     );
 
 string jwtAudience = builder.Configuration["Jwt:Audience"]
     ?? throw new InvalidOperationException(
-        "Không tìm thấy cấu hình Jwt:Audience."
+        "Missing Jwt:Audience configuration."
     );
 
 builder.Services
@@ -114,10 +114,10 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-// Seed roles: Admin, Manager, Customer
+// Seed roles and the default demo Admin account.
 using (IServiceScope scope = app.Services.CreateScope())
 {
-    await IdentitySeeder.SeedRolesAsync(scope.ServiceProvider);
+    await IdentitySeeder.SeedAsync(scope.ServiceProvider);
 }
 
 // Configure the HTTP request pipeline.
@@ -138,3 +138,6 @@ app.MapGet("/", () => "Hello ASP.NET Core");
 app.MapControllers();
 
 app.Run();
+
+// Allow WebApplicationFactory to initialize the application in the test project.
+public partial class Program { }

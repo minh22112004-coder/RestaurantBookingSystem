@@ -1,0 +1,74 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Create account";
+}
+
+<section class="auth-page">
+    <div class="container auth-grid">
+        <div class="auth-intro">
+            <p class="eyebrow">New member</p>
+            <h1>A great table is only a few steps away.</h1>
+            <p>Create a customer account to reserve online and keep track of every restaurant update.</p>
+            <div class="auth-note">
+                <strong>Secure by default</strong>
+                <span>Your password travels over a secure connection, and the access token stays in a server-side session.</span>
+            </div>
+        </div>
+
+        <div class="auth-card">
+            <div class="auth-card__heading">
+                <p class="eyebrow">Get started</p>
+                <h2>Create account</h2>
+                <p>Already a member? <a class="text-link" asp-action="Login">Sign in</a></p>
+            </div>
+
+            <form asp-action="Register" method="post" class="auth-form" data-validated-form novalidate>
+                <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
+
+                <div class="form-field">
+                    <label asp-for="Username"></label>
+                    <input asp-for="Username" autocomplete="username" placeholder="Your display name" required maxlength="50" data-required-message="Please enter a username." data-trim-required autofocus />
+                    <span asp-validation-for="Username" class="field-validation"></span>
+                </div>
+
+                <div class="form-field">
+                    <label asp-for="Email"></label>
+                    <input asp-for="Email" autocomplete="email" inputmode="email" placeholder="you@example.com" required maxlength="100" data-required-message="Please enter your email address." />
+                    <span asp-validation-for="Email" class="field-validation"></span>
+                </div>
+
+                <div class="form-field">
+                    <label asp-for="Phone"></label>
+                    <input asp-for="Phone" autocomplete="tel" inputmode="tel" placeholder="Optional" />
+                    <span asp-validation-for="Phone" class="field-validation"></span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label asp-for="Password"></label>
+                        <div class="password-field">
+                            <input asp-for="Password" autocomplete="new-password" placeholder="At least 6 characters" required minlength="6" data-required-message="Please enter a password." />
+                            <button type="button" data-password-toggle aria-label="Show password">Show</button>
+                        </div>
+                        <span asp-validation-for="Password" class="field-validation"></span>
+                    </div>
+                    <div class="form-field">
+                        <label asp-for="ConfirmPassword"></label>
+                        <div class="password-field">
+                            <input asp-for="ConfirmPassword" autocomplete="new-password" placeholder="Repeat your password" required data-required-message="Please confirm your password." data-match="Password" data-match-message="The password confirmation does not match." />
+                            <button type="button" data-password-toggle aria-label="Show password">Show</button>
+                        </div>
+                        <span asp-validation-for="ConfirmPassword" class="field-validation"></span>
+                    </div>
+                </div>
+
+                <button class="button auth-submit" type="submit">Create account</button>
+                <p class="form-disclaimer">By registering, you confirm that the information provided is accurate.</p>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

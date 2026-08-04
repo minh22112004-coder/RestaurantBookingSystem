@@ -1,82 +1,88 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RestaurantBookingSystem.DTOs.DiningTable;
+using RestaurantBookingSystem.Features.Authorization.Policies;
 using RestaurantBookingSystem.Services.Interfaces;
 
-namespace RestaurantBookingSystem.Controllers
+namespace RestaurantBookingSystem.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class DiningTableController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class DiningTableController : ControllerBase
+    private readonly IDiningTableService _tableService;
+
+    public DiningTableController(IDiningTableService tableService)
     {
-        private readonly IDiningTableService _tableService;
+        _tableService = tableService;
+    }
 
-        public DiningTableController(IDiningTableService tableService)
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> GetAll() => Ok(await _tableService.GetAllAsync());
+
+    [AllowAnonymous]
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var table = await _tableService.GetByIdAsync(id);
+        return table is null ? NotFound() : Ok(table);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("restaurant/{restaurantId:int}")]
+    public async Task<IActionResult> GetByRestaurant(int restaurantId) =>
+        Ok(await _tableService.GetByRestaurantAsync(restaurantId));
+
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] DiningTableCreateDto dto)
+    {
+        try
         {
-            _tableService = tableService;
+            var table = await _tableService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = table.TableId }, table);
         }
-
-        [HttpGet]
-        public IActionResult GetAll()
+        catch (KeyNotFoundException ex)
         {
-            return Ok(_tableService.GetAll());
+            return NotFound(new { message = ex.Message });
         }
-
-        [HttpGet("{id}")]
-        public IActionResult GetById(int id)
+        catch (InvalidOperationException ex)
         {
-            var table = _tableService.GetById(id);
-
-            if (table == null)
-                return NotFound();
-
-            return Ok(table);
+            return BadRequest(new { message = ex.Message });
         }
+    }
 
-        [HttpGet("restaurant/{restaurantId}")]
-        public IActionResult GetByRestaurant(int restaurantId)
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, [FromBody] DiningTableUpdateDto dto)
+    {
+        try
         {
-            return Ok(_tableService.GetByRestaurant(restaurantId));
+            return await _tableService.UpdateAsync(id, dto) ? NoContent() : NotFound();
         }
-
-        [HttpPost]
-        public IActionResult Create([FromBody] DiningTableCreateDto dto)
+        catch (KeyNotFoundException ex)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var table = _tableService.Create(dto);
-
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = table.TableId },
-                table);
+            return NotFound(new { message = ex.Message });
         }
-
-        [HttpPut("{id}")]
-        public IActionResult Update(int id, [FromBody] DiningTableUpdateDto dto)
+        catch (InvalidOperationException ex)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (!_tableService.Update(id, dto))
-            {
-                return NotFound();
-            }
-
-            return NoContent();
+            return BadRequest(new { message = ex.Message });
         }
+    }
 
-        [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
         {
-            if (!_tableService.Delete(id))
-                return NotFound();
-
-            return NoContent();
+            return await _tableService.DeleteAsync(id) ? NoContent() : NotFound();
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict(new { message = "The table has reservation history and cannot be deleted." });
         }
     }
 }

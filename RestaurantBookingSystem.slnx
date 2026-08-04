@@ -1,3 +1,6 @@
 <Solution>
   <Project Path="RestaurantBookingSystem/RestaurantBookingSystem.csproj" />
+  <Project Path="RestaurantBookingSystem.Tests/RestaurantBookingSystem.Tests.csproj" />
+  <Project Path="RestaurantBookingSystem.Web/RestaurantBookingSystem.Web.csproj" />
+  <Project Path="RestaurantBookingSystem.Web.Tests/RestaurantBookingSystem.Web.Tests.csproj" />
 </Solution>

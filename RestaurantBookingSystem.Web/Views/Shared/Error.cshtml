@@ -1,0 +1,14 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+<section class="message-page container">
+    <p class="eyebrow">Error @Model.StatusCode</p>
+    <h1>@Model.Title</h1>
+    <p>@Model.Message</p>
+    @if (!string.IsNullOrWhiteSpace(Model.RequestId))
+    {
+        <p class="request-id">Request ID: <code>@Model.RequestId</code></p>
+    }
+    <a class="button" href="/">Return home</a>
+</section>

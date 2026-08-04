@@ -1,0 +1,53 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Sign in";
+}
+
+<section class="auth-page">
+    <div class="container auth-grid">
+        <div class="auth-intro">
+            <p class="eyebrow">Welcome back</p>
+            <h1>Continue your dining journey.</h1>
+            <p>Sign in to manage reservations, follow notifications, and keep every dining plan in one place.</p>
+            <dl class="auth-benefits">
+                <div><dt>01</dt><dd>View and update reservations</dd></div>
+                <div><dt>02</dt><dd>Receive timely status updates</dd></div>
+                <div><dt>03</dt><dd>Book faster next time</dd></div>
+            </dl>
+        </div>
+
+        <div class="auth-card">
+            <div class="auth-card__heading">
+                <p class="eyebrow">Your account</p>
+                <h2>Sign in</h2>
+                <p>New to Table &amp; Taste? <a class="text-link" asp-action="Register">Create an account</a></p>
+            </div>
+
+            <form asp-action="Login" method="post" class="auth-form" data-validated-form novalidate>
+                <input asp-for="ReturnUrl" type="hidden" />
+                <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
+
+                <div class="form-field">
+                    <label asp-for="Email"></label>
+                    <input asp-for="Email" autocomplete="username" placeholder="Email or username" required data-required-message="Please enter your email or username." autofocus />
+                    <span asp-validation-for="Email" class="field-validation"></span>
+                </div>
+
+                <div class="form-field">
+                    <label asp-for="Password"></label>
+                    <div class="password-field">
+                        <input asp-for="Password" autocomplete="current-password" placeholder="Enter your password" required data-required-message="Please enter your password." />
+                        <button type="button" data-password-toggle aria-label="Show password">Show</button>
+                    </div>
+                    <span asp-validation-for="Password" class="field-validation"></span>
+                </div>
+
+                <button class="button auth-submit" type="submit">Sign in</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

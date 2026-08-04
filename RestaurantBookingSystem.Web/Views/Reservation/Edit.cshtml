@@ -1,0 +1,60 @@
+@model ReservationEditViewModel
+@{
+    ViewData["Title"] = "Edit reservation";
+    Layout = "_CustomerLayout";
+}
+
+<section class="customer-page-heading customer-page-heading--compact">
+    <div>
+        <a class="back-link" href="/reservations">Back to reservations</a>
+        <p class="eyebrow">Reservation #@Model.ReservationId</p>
+        <h1>Edit reservation</h1>
+        <p>Update your visit to <strong>@Model.RestaurantName</strong>. Availability will be checked again when you save.</p>
+    </div>
+    <span class="status-pill">@Model.Status</span>
+</section>
+
+<form action="/reservations/@Model.ReservationId/edit" method="post" class="edit-reservation-form" data-validated-form data-reservation-form novalidate>
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
+    <div class="form-field edit-reservation-form__wide">
+        <label asp-for="Form.TableId"></label>
+        <select asp-for="Form.TableId" required data-required-message="Please choose a table.">
+            @foreach (var table in Model.Tables.OrderBy(table => table.Capacity).ThenBy(table => table.TableNumber))
+            {
+                <option value="@table.TableId" data-capacity="@table.Capacity">Table @table.TableNumber - up to @table.Capacity guests</option>
+            }
+        </select>
+        <span asp-validation-for="Form.TableId" class="field-validation"></span>
+    </div>
+    <div class="form-field">
+        <label asp-for="Form.Date"></label>
+        <input asp-for="Form.Date" min="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" required data-required-message="Please choose a date." data-invalid-message="Choose today or a future date." />
+        <span asp-validation-for="Form.Date" class="field-validation"></span>
+    </div>
+    <div class="form-field">
+        <label asp-for="Form.GuestCount"></label>
+        <input asp-for="Form.GuestCount" type="number" min="1" max="100" required data-invalid-message="Enter a valid number of guests." />
+        <span class="capacity-hint" data-capacity-hint></span>
+        <span asp-validation-for="Form.GuestCount" class="field-validation"></span>
+    </div>
+    <div class="form-field">
+        <label asp-for="Form.StartTime"></label>
+        <input asp-for="Form.StartTime" min="@Model.OpenTime.ToString("HH:mm")" max="@Model.CloseTime.ToString("HH:mm")" required data-required-message="Please choose a start time." data-invalid-message="Choose a time within opening hours." />
+        <span asp-validation-for="Form.StartTime" class="field-validation"></span>
+    </div>
+    <div class="form-field">
+        <label asp-for="Form.EndTime"></label>
+        <input asp-for="Form.EndTime" min="@Model.OpenTime.ToString("HH:mm")" max="@Model.CloseTime.ToString("HH:mm")" required data-required-message="Please choose an end time." data-invalid-message="The end time must be later than the start time and within opening hours." />
+        <span asp-validation-for="Form.EndTime" class="field-validation"></span>
+    </div>
+    <div class="edit-reservation-form__actions">
+        <a class="button button--ghost" href="/reservations">Discard changes</a>
+        <button class="button" type="submit">Save reservation</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/reservation.js" asp-append-version="true"></script>
+}

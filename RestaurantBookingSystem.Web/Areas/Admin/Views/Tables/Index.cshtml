@@ -1,0 +1,49 @@
+@model AdminTableIndexViewModel
+@{
+    ViewData["Title"] = "Tables";
+    var formModel = new AdminTableEditViewModel { Restaurants = Model.Restaurants, Form = Model.Form };
+}
+<header class="admin-page-header">
+    <div><p class="eyebrow">Table management</p><h1>Dining tables</h1></div>
+    <form method="get" class="admin-filter admin-filter--compact" data-loading-form>
+        <label for="restaurantId">Restaurant</label>
+        <select id="restaurantId" name="restaurantId">
+            <option value="">All restaurants</option>
+            @foreach (var restaurant in Model.Restaurants) { <option value="@restaurant.RestaurantId" selected="@(Model.SelectedRestaurantId == restaurant.RestaurantId)">@restaurant.Name</option> }
+        </select>
+        <button class="button button--small" type="submit">Apply</button>
+    </form>
+</header>
+<div class="admin-split">
+    <section class="admin-panel">
+        <div class="admin-panel__heading"><h2>Table list</h2><span>@Model.Tables.Count shown</span></div>
+        @if (Model.Tables.Count == 0) { <p class="admin-empty">No tables match this restaurant.</p> }
+        else
+        {
+            <div class="admin-table-wrap"><table class="admin-table">
+                <thead><tr><th>Table</th><th>Restaurant</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                @foreach (var table in Model.Tables)
+                {
+                    <tr>
+                        <td><strong>@table.TableNumber</strong></td><td>@Model.RestaurantName(table.RestaurantId)</td><td>@table.Capacity guests</td><td><span class="status-badge status-badge--@table.Status.ToLowerInvariant()">@table.Status</span></td>
+                        <td class="admin-actions">
+                            <a class="button button--small button--ghost" asp-action="Edit" asp-route-id="@table.TableId">Edit</a>
+                            <form asp-action="Delete" asp-route-id="@table.TableId" asp-route-restaurantId="@Model.SelectedRestaurantId" method="post" data-confirm-form data-confirm-title="Delete table?" data-confirm-message="This table will be permanently deleted if it has no reservation history."><button class="button button--small button--danger" type="submit">Delete</button></form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table></div>
+        }
+    </section>
+    <section class="admin-panel admin-panel--form">
+        <div class="admin-panel__heading"><h2>Add table</h2></div>
+        <form asp-action="Create" method="post">
+            <partial name="_Form" model="formModel" />
+            <button class="button" type="submit">Create table</button>
+        </form>
+    </section>
+</div>
+<partial name="~/Views/Shared/_ConfirmDialogPartial.cshtml" />
+@section Scripts { <script src="~/js/validation.js" asp-append-version="true"></script> }

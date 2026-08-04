@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Discover restaurants and reserve a table online with ease." />
+    <title>@ViewData["Title"] - Table & Taste</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <partial name="_Header" />
+    <partial name="_FlashMessages" />
+    <main id="main-content" class="site-main">
+        @RenderBody()
+    </main>
+    <partial name="_Footer" />
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

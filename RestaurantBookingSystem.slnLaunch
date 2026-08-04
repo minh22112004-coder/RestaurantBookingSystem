@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "API and Web",
+    "Projects": [
+      {
+        "Path": "RestaurantBookingSystem\\RestaurantBookingSystem.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "RestaurantBookingSystem.Web\\RestaurantBookingSystem.Web.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

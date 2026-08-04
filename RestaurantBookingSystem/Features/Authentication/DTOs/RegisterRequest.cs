@@ -4,20 +4,20 @@ namespace RestaurantBookingSystem.Features.Authentication.DTOs
 {
     public class RegisterRequest
     {
-        [Required(ErrorMessage = "Tên đăng nhập không được để trống.")]
-        [MaxLength(50, ErrorMessage = "Tên đăng nhập tối đa 50 ký tự.")]
+        [Required(ErrorMessage = "Username is required.")]
+        [MaxLength(50, ErrorMessage = "Username cannot exceed 50 characters.")]
         public string Username { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Email không được để trống.")]
-        [EmailAddress(ErrorMessage = "Email không đúng định dạng.")]
-        [MaxLength(100, ErrorMessage = "Email tối đa 100 ký tự.")]
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Enter a valid email address.")]
+        [MaxLength(100, ErrorMessage = "Email cannot exceed 100 characters.")]
         public string Email { get; set; } = string.Empty;
 
-        [MaxLength(20, ErrorMessage = "Số điện thoại tối đa 20 ký tự.")]
+        [MaxLength(20, ErrorMessage = "Phone number cannot exceed 20 characters.")]
         public string? Phone { get; set; }
 
-        [Required(ErrorMessage = "Mật khẩu không được để trống.")]
-        [MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự.")]
+        [Required(ErrorMessage = "Password is required.")]
+        [MinLength(6, ErrorMessage = "Password must contain at least 6 characters.")]
         public string Password { get; set; } = string.Empty;
     }
 }

@@ -1,0 +1,18 @@
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="container flash-wrapper">
+        <div class="flash-message flash-message--success" role="status" data-flash-message>
+            <span>@successMessage</span>
+            <button type="button" aria-label="Dismiss notification" data-flash-dismiss>&times;</button>
+        </div>
+    </div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="container flash-wrapper">
+        <div class="flash-message flash-message--error" role="alert" data-flash-message>
+            <span>@errorMessage</span>
+            <button type="button" aria-label="Dismiss notification" data-flash-dismiss>&times;</button>
+        </div>
+    </div>
+}

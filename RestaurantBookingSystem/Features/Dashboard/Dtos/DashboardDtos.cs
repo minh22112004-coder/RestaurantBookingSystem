@@ -1,7 +1,9 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace RestaurantBookingSystem.Features.Dashboard.Dtos
 {
     
-    public class ReportFilterDto
+    public class ReportFilterDto : IValidatableObject
     {
         public DateTime? From { get; set; }
         public DateTime? To { get; set; }
@@ -10,12 +12,22 @@ namespace RestaurantBookingSystem.Features.Dashboard.Dtos
 
         public int? RestaurantId { get; set; }
 
-        /// Chuẩn hoá khoảng thời gian: nếu không truyền thì mặc định lấy 30 ngày gần nhất.
+        /// Normalizes the date range and defaults to the most recent 30 days.
         public (DateTime From, DateTime To) Normalize()
         {
             var to = (To ?? DateTime.Now.Date).Date.AddDays(1).AddTicks(-1); 
             var from = (From ?? to.AddDays(-30)).Date;
+            if (from > to)
+                throw new ArgumentException("The start date must be earlier than or equal to the end date.");
             return (from, to);
+        }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (From.HasValue && To.HasValue && From.Value.Date > To.Value.Date)
+                yield return new ValidationResult(
+                    "The start date must be earlier than or equal to the end date.",
+                    new[] { nameof(From), nameof(To) });
         }
     }
 

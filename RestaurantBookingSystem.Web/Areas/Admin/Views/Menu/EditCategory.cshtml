@@ -1,0 +1,11 @@
+@model AdminCategoryEditViewModel
+@{ ViewData["Title"] = "Edit category"; }
+<header class="admin-page-header"><div><p class="eyebrow">Menu management</p><h1>Edit category</h1></div><a class="button button--ghost" asp-action="Index">Back to menu</a></header>
+<section class="admin-panel admin-editor">
+    <form asp-action="EditCategory" asp-route-id="@Model.CategoryId" method="post">
+        <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
+        <div class="form-field"><label asp-for="Form.Name"></label><input asp-for="Form.Name" /><span asp-validation-for="Form.Name" class="field-validation"></span></div>
+        <div class="admin-form-actions"><button class="button" type="submit">Save changes</button><a asp-action="Index">Cancel</a></div>
+    </form>
+</section>
+@section Scripts { <script src="~/js/validation.js" asp-append-version="true"></script> }

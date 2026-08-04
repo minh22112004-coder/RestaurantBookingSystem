@@ -1,109 +1,95 @@
-﻿using RestaurantBookingSystem.DTOs.Restaurant;
+using Microsoft.EntityFrameworkCore;
+using RestaurantBookingSystem.DTOs.Restaurant;
 using RestaurantBookingSystem.Models;
 using RestaurantBookingSystem.Services.Interfaces;
 
-namespace RestaurantBookingSystem.Services
+namespace RestaurantBookingSystem.Services;
+
+public class RestaurantService : IRestaurantService
 {
-    public class RestaurantService : IRestaurantService
+    private readonly RestaurantReservationDbContext _context;
+
+    public RestaurantService(RestaurantReservationDbContext context)
     {
-        private static List<Restaurantfc2> restaurants = new()
-    {
-        new Restaurantfc2
-        {
-            RestaurantId = 1,
-            Name = "Pizza Hut",
-            Address = "Thu Dau Mot",
-            Phone = "0909123456",
-            OpenTime = new TimeOnly(8,0),
-            CloseTime = new TimeOnly(22,0)
-        }
-    };
-
-        public RestaurantResponseDto Create(RestaurantCreateDto dto)
-        {
-            var restaurant = new Restaurantfc2
-            {
-                RestaurantId = restaurants.Any()
-                    ? restaurants.Max(r => r.RestaurantId) + 1
-                    : 1,
-
-                Name = dto.Name,
-                Address = dto.Address,
-                Phone = dto.Phone,
-                OpenTime = dto.OpenTime,
-                CloseTime = dto.CloseTime
-            };
-
-            restaurants.Add(restaurant);
-
-            return new RestaurantResponseDto
-            {
-                RestaurantId = restaurant.RestaurantId,
-                Name = restaurant.Name,
-                Address = restaurant.Address,
-                Phone = restaurant.Phone,
-                OpenTime = restaurant.OpenTime,
-                CloseTime = restaurant.CloseTime
-            };
-        }
-
-        public bool Delete(int id)
-        {
-            var restaurant = restaurants.FirstOrDefault(r => r.RestaurantId == id);
-
-            if (restaurant == null)
-                return false;
-
-            restaurants.Remove(restaurant);
-
-            return true;
-        }
-
-        public IEnumerable<RestaurantResponseDto> GetAll()
-        {
-            return restaurants.Select(r => new RestaurantResponseDto
-            {
-                RestaurantId = r.RestaurantId,
-                Name = r.Name,
-                Address = r.Address,
-                Phone = r.Phone,
-                OpenTime = r.OpenTime,
-                CloseTime = r.CloseTime
-            });
-        }
-
-        public RestaurantResponseDto? GetById(int id)
-        {
-            var restaurant = restaurants.FirstOrDefault(r => r.RestaurantId == id);
-
-            if (restaurant == null)
-                return null;
-
-            return new RestaurantResponseDto
-            {
-                RestaurantId = restaurant.RestaurantId,
-                Name = restaurant.Name,
-                Address = restaurant.Address,
-                Phone = restaurant.Phone,
-                OpenTime = restaurant.OpenTime,
-                CloseTime = restaurant.CloseTime
-            };
-        }
-
-        public bool Update(int id, RestaurantUpdateDto dto)
-        {
-            var restaurant = restaurants.FirstOrDefault(r => r.RestaurantId == id);
-
-            if (restaurant == null)
-                return false;
-
-            restaurant.Name = dto.Name;
-            restaurant.Address = dto.Address;
-            restaurant.Phone = dto.Phone;
-            restaurant.OpenTime = dto.OpenTime;
-            restaurant.CloseTime = dto.CloseTime;
-
-            return true;
-        }
+        _context = context;
     }
+
+    public async Task<IReadOnlyList<RestaurantResponseDto>> GetAllAsync()
+    {
+        var restaurants = await _context.Restaurants
+            .AsNoTracking()
+            .OrderBy(r => r.RestaurantId)
+            .ToListAsync();
+        return restaurants.Select(Map).ToList();
+    }
+
+    public async Task<RestaurantResponseDto?> GetByIdAsync(int id)
+    {
+        var restaurant = await _context.Restaurants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.RestaurantId == id);
+        return restaurant is null ? null : Map(restaurant);
+    }
+
+    public async Task<RestaurantResponseDto> CreateAsync(RestaurantCreateDto dto)
+    {
+        ValidateOpeningHours(dto.OpenTime, dto.CloseTime);
+
+        var restaurant = new Restaurant
+        {
+            Name = dto.Name.Trim(),
+            Address = dto.Address.Trim(),
+            Phone = dto.Phone.Trim(),
+            OpenTime = dto.OpenTime,
+            CloseTime = dto.CloseTime
+        };
+
+        _context.Restaurants.Add(restaurant);
+        await _context.SaveChangesAsync();
+        return Map(restaurant);
+    }
+
+    public async Task<bool> UpdateAsync(int id, RestaurantUpdateDto dto)
+    {
+        ValidateOpeningHours(dto.OpenTime, dto.CloseTime);
+
+        var restaurant = await _context.Restaurants.FindAsync(id);
+        if (restaurant is null)
+            return false;
+
+        restaurant.Name = dto.Name.Trim();
+        restaurant.Address = dto.Address.Trim();
+        restaurant.Phone = dto.Phone.Trim();
+        restaurant.OpenTime = dto.OpenTime;
+        restaurant.CloseTime = dto.CloseTime;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var restaurant = await _context.Restaurants.FindAsync(id);
+        if (restaurant is null)
+            return false;
+
+        _context.Restaurants.Remove(restaurant);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    private static void ValidateOpeningHours(TimeOnly openTime, TimeOnly closeTime)
+    {
+        if (closeTime <= openTime)
+            throw new InvalidOperationException("Closing time must be later than opening time.");
+    }
+
+    private static RestaurantResponseDto Map(Restaurant restaurant) => new()
+    {
+        RestaurantId = restaurant.RestaurantId,
+        Name = restaurant.Name,
+        Address = restaurant.Address ?? string.Empty,
+        Phone = restaurant.Phone ?? string.Empty,
+        OpenTime = restaurant.OpenTime ?? default,
+        CloseTime = restaurant.CloseTime ?? default
+    };
 }

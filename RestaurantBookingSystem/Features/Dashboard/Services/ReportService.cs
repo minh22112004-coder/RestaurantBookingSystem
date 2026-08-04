@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using RestaurantBookingSystem.Features.Authorization.Constants;
 using RestaurantBookingSystem.Features.Dashboard.Dtos;
 using RestaurantBookingSystem.Models;
 
@@ -37,12 +38,22 @@ namespace RestaurantBookingSystem.Features.Dashboard.Services
             var totalTables = await tablesQuery.CountAsync();
             var occupiedNow = await tablesQuery.CountAsync(t => t.Status == TableStatusOccupied);
 
-            var todayRevenue = await _context.Orders
+            var todayOrders = _context.Orders.AsQueryable();
+            var yesterdayOrders = _context.Orders.AsQueryable();
+            if (restaurantId.HasValue)
+            {
+                todayOrders = todayOrders.Where(o => o.Reservation != null &&
+                    o.Reservation.Table != null && o.Reservation.Table.RestaurantId == restaurantId.Value);
+                yesterdayOrders = yesterdayOrders.Where(o => o.Reservation != null &&
+                    o.Reservation.Table != null && o.Reservation.Table.RestaurantId == restaurantId.Value);
+            }
+
+            var todayRevenue = await todayOrders
                 .Where(o => o.PaymentStatus == PaymentStatusPaid
                             && o.CreatedAt >= today && o.CreatedAt < tomorrow)
                 .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
 
-            var yesterdayRevenue = await _context.Orders
+            var yesterdayRevenue = await yesterdayOrders
                 .Where(o => o.PaymentStatus == PaymentStatusPaid
                             && o.CreatedAt >= yesterday && o.CreatedAt < today)
                 .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
@@ -52,16 +63,24 @@ namespace RestaurantBookingSystem.Features.Dashboard.Services
                 : (double)((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100;
 
             var todayReservationsQuery = _context.Reservations.Where(r => r.Date == todayDateOnly);
+            if (restaurantId.HasValue)
+                todayReservationsQuery = todayReservationsQuery.Where(r => r.Table != null &&
+                    r.Table.RestaurantId == restaurantId.Value);
 
             var todayReservations = await todayReservationsQuery.CountAsync();
             var pending = await todayReservationsQuery.CountAsync(r => r.Status == ReservationStatusPending);
             var confirmed = await todayReservationsQuery.CountAsync(r => r.Status == ReservationStatusConfirmed);
             var cancelled = await todayReservationsQuery.CountAsync(r => r.Status == ReservationStatusCancelled);
 
-            var totalCustomers = await _context.Users.CountAsync();
+            var customersQuery = _context.Users
+                .Where(u => u.Roles.Any(role => role.RoleName == RoleNames.Customer));
+            if (restaurantId.HasValue)
+                customersQuery = customersQuery.Where(u => u.Reservations.Any(r => r.Table != null &&
+                    r.Table.RestaurantId == restaurantId.Value));
+            var totalCustomers = await customersQuery.CountAsync();
 
             var firstMonth = new DateOnly(today.Year, today.Month, 1);
-            var newCustomersThisMonth = await GetNewCustomersCountAsync(firstMonth, todayDateOnly);
+            var newCustomersThisMonth = await GetNewCustomersCountAsync(firstMonth, todayDateOnly, restaurantId);
 
             return new DashboardOverviewDto
             {
@@ -185,6 +204,7 @@ namespace RestaurantBookingSystem.Features.Dashboard.Services
 
             var tablesQuery = _context.DiningTables
                 .Include(t => t.Reservations)
+                .Include(t => t.Restaurant)
                 .AsQueryable();
 
             if (filter.RestaurantId.HasValue)
@@ -194,15 +214,26 @@ namespace RestaurantBookingSystem.Features.Dashboard.Services
 
             var result = tables.Select(t =>
             {
-                var count = t.Reservations.Count(r =>
-                    r.Date >= fromDateOnly && r.Date <= toDateOnly && r.Status != ReservationStatusCancelled);
+                var validReservations = t.Reservations.Where(r =>
+                    r.Date >= fromDateOnly && r.Date <= toDateOnly &&
+                    r.Status != ReservationStatusCancelled && r.EndTime > r.StartTime).ToList();
+                var count = validReservations.Count;
+                var reservedMinutes = validReservations.Sum(r =>
+                    (r.EndTime.ToTimeSpan() - r.StartTime.ToTimeSpan()).TotalMinutes);
+                var openMinutesPerDay = t.Restaurant?.OpenTime is TimeOnly open &&
+                                        t.Restaurant.CloseTime is TimeOnly close && close > open
+                    ? (close.ToTimeSpan() - open.ToTimeSpan()).TotalMinutes
+                    : TimeSpan.FromDays(1).TotalMinutes;
+                var availableMinutes = totalDays * openMinutesPerDay;
 
                 return new TableOccupancyDto
                 {
                     TableId = t.TableId,
                     TableNumber = t.TableNumber,
                     TimesReserved = count,
-                    OccupancyRatePercent = Math.Round((double)count / totalDays * 100, 2)
+                    OccupancyRatePercent = availableMinutes <= 0
+                        ? 0
+                        : Math.Round(Math.Min(100, reservedMinutes / availableMinutes * 100), 2)
                 };
             })
             .OrderByDescending(x => x.TimesReserved)
@@ -234,7 +265,7 @@ namespace RestaurantBookingSystem.Features.Dashboard.Services
                 {
                     oi.MenuItem!.MenuItemId,
                     oi.MenuItem.Name,
-                    CategoryName = oi.MenuItem.Category?.Name ?? "Chưa phân loại"
+                    CategoryName = oi.MenuItem.Category?.Name ?? "Uncategorized"
                 })
                 .Select(g => new TopMenuItemDto
                 {
@@ -288,11 +319,14 @@ namespace RestaurantBookingSystem.Features.Dashboard.Services
             var fromDateOnly = DateOnly.FromDateTime(from);
             var toDateOnly = DateOnly.FromDateTime(to);
 
-            var reservations = await _context.Reservations
+            var reservationsQuery = _context.Reservations
                 .Include(r => r.User)
                 .Include(r => r.Order)
-                .Where(r => r.Date >= fromDateOnly && r.Date <= toDateOnly && r.UserId != null && r.User != null)
-                .ToListAsync();
+                .Where(r => r.Date >= fromDateOnly && r.Date <= toDateOnly && r.UserId != null && r.User != null);
+            if (filter.RestaurantId.HasValue)
+                reservationsQuery = reservationsQuery.Where(r => r.Table != null &&
+                    r.Table.RestaurantId == filter.RestaurantId.Value);
+            var reservations = await reservationsQuery.ToListAsync();
 
             var result = reservations
                 .GroupBy(r => new { UserId = r.UserId!.Value, Username = r.User!.Username, r.User.Email })
@@ -319,7 +353,7 @@ namespace RestaurantBookingSystem.Features.Dashboard.Services
             var fromDateOnly = DateOnly.FromDateTime(from);
             var toDateOnly = DateOnly.FromDateTime(to);
 
-            var firstBookingDates = await GetFirstBookingDatesAsync();
+            var firstBookingDates = await GetFirstBookingDatesAsync(filter.RestaurantId);
 
             var inRange = firstBookingDates
                 .Where(d => d >= fromDateOnly && d <= toDateOnly)
@@ -336,16 +370,18 @@ namespace RestaurantBookingSystem.Features.Dashboard.Services
                 .ToList();
         }
 
-        private async Task<int> GetNewCustomersCountAsync(DateOnly from, DateOnly to)
+        private async Task<int> GetNewCustomersCountAsync(DateOnly from, DateOnly to, int? restaurantId)
         {
-            var firstBookingDates = await GetFirstBookingDatesAsync();
+            var firstBookingDates = await GetFirstBookingDatesAsync(restaurantId);
             return firstBookingDates.Count(d => d >= from && d <= to);
         }
 
-        private async Task<List<DateOnly>> GetFirstBookingDatesAsync()
+        private async Task<List<DateOnly>> GetFirstBookingDatesAsync(int? restaurantId)
         {
-            var userBookingDates = await _context.Reservations
-                .Where(r => r.UserId != null)
+            var query = _context.Reservations.Where(r => r.UserId != null);
+            if (restaurantId.HasValue)
+                query = query.Where(r => r.Table != null && r.Table.RestaurantId == restaurantId.Value);
+            var userBookingDates = await query
                 .Select(r => new { r.UserId, r.Date })
                 .ToListAsync();
 

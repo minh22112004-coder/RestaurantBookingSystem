@@ -1,0 +1,10 @@
+@model AdminTableEditViewModel
+@{ ViewData["Title"] = "Edit table"; }
+<header class="admin-page-header"><div><p class="eyebrow">Table management</p><h1>Edit table</h1></div><a class="button button--ghost" asp-action="Index" asp-route-restaurantId="@Model.Form.RestaurantId">Back to tables</a></header>
+<section class="admin-panel admin-editor">
+    <form asp-action="Edit" asp-route-id="@Model.TableId" method="post">
+        <partial name="_Form" model="Model" />
+        <div class="admin-form-actions"><button class="button" type="submit">Save changes</button><a asp-action="Index" asp-route-restaurantId="@Model.Form.RestaurantId">Cancel</a></div>
+    </form>
+</section>
+@section Scripts { <script src="~/js/validation.js" asp-append-version="true"></script> }
